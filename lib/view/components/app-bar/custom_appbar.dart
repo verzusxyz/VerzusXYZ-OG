@@ -7,20 +7,45 @@ import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/app-bar/action_button_icon_widget.dart';
 import 'package:verzusxyz/view/components/dialog/exit_dialog.dart';
 
+/// A custom app bar widget.
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
+  /// The title of the app bar.
   final String title;
+
+  /// Whether to show the back button.
   final bool isShowBackBtn;
+
+  /// The background color of the app bar.
   final Color bgColor;
+
+  /// Whether to show the action button.
   final bool isShowActionBtn;
+
+  /// Whether to center the title.
   final bool isTitleCenter;
+
+  /// Whether the app bar is used in an authentication screen.
   final bool fromAuth;
+
+  /// Whether the user's profile is completed.
   final bool isProfileCompleted;
+
+  /// The icon for the action button.
   final dynamic actionIcon;
+
+  /// The callback function for the action button.
   final VoidCallback? actionPress;
+
+  /// Whether to align the action icon to the end.
   final bool isActionIconAlignEnd;
+
+  /// The text for the action button.
   final String actionText;
+
+  /// Whether the action button is an image.
   final bool isActionImage;
 
+  /// Creates a new [CustomAppBar] instance.
   const CustomAppBar({
     Key? key,
     this.isProfileCompleted = false,

@@ -42,54 +42,142 @@ import '../../view/screens/withdraw/add_withdraw_screen/add_withdraw_method_scre
 import '../../view/screens/withdraw/confirm_withdraw_screen/withdraw_confirm_screen.dart';
 import '../../view/screens/withdraw/withdraw_history/withdraw_screen.dart';
 
+/// A helper class for managing routes and navigation.
 class RouteHelper {
+  /// The route for the splash screen.
   static const String splashScreen = "/splash_screen";
+
+  /// The route for the onboarding screen.
   static const String onboardScreen = "/onboard_screen";
+
+  /// The route for the login screen.
   static const String loginScreen = "/login_screen";
+
+  /// The route for the forgot password screen.
   static const String forgotPasswordScreen = "/forgot_password_screen";
+
+  /// The route for the change password screen.
   static const String changePasswordScreen = "/change_password_screen";
+
+  /// The route for the registration screen.
   static const String registrationScreen = "/registration_screen";
+
+  /// The route for the main bottom navigation bar.
   static const String bottomNavBar = "/bottom_nav_bar";
+
+  /// The route for the profile complete screen.
   static const String profileCompleteScreen = "/profile_complete_screen";
+
+  /// The route for the email verification screen.
   static const String emailVerificationScreen = "/verify_email_screen";
+
+  /// The route for the SMS verification screen.
   static const String smsVerificationScreen = "/verify_sms_screen";
+
+  /// The route for the password verification code screen.
   static const String verifyPassCodeScreen = "/verify_pass_code_screen";
+
+  /// The route for the two-factor authentication setup screen.
   static const String twoFactorScreen = "/two-factor-screen";
+
+  /// The route for the two-factor authentication verification screen.
   static const String twoFactorVerificationScreen =
       "/two-factor-verification-screen";
+
+  /// The route for the reset password screen.
   static const String resetPasswordScreen = "/reset_pass_screen";
+
+  /// The route for the transaction history screen.
   static const String transactionHistoryScreen = "/transaction_history_screen";
+
+  /// The route for the profile screen.
   static const String profileScreen = "/profile_screen";
+
+  /// The route for the edit profile screen.
   static const String editProfileScreen = "/edit_profile_screen";
+
+  /// The route for the KYC screen.
   static const String kycScreen = "/kyc_screen";
+
+  /// The route for the privacy policy screen.
   static const String privacyScreen = "/privacy-screen";
+
+  /// The route for the FAQ screen.
   static const String faqScreen = "/faq-screen";
 
+  /// The route for the withdraw screen.
   static const String withdrawScreen = "/withdraw-screen";
+
+  /// The route for the add withdraw method screen.
   static const String addWithdrawMethodScreen = "/withdraw-method";
+
+  /// The route for the withdraw confirmation screen.
   static const String withdrawConfirmScreenScreen = "/withdraw-preview-screen";
+
+  /// The route for the Head & Tail game screen.
   static const String headAndTailScreen = "/head-tail-screen";
+
+  /// The route for the Rock Paper Scissors game screen.
   static const String rockPaperScissorsScreen = "/rock-paper-screen";
+
+  /// The route for the Roulette game screen.
   static const String rouletteScreen = "/roulette-screen";
+
+  /// The route for the Guess the Number game screen.
   static const String guessTheNumberScreen = "/guess-the-number-screen";
+
+  /// The route for the Dice Rolling game screen.
   static const String diceRollingScreen = "/dice-rolling-screen";
+
+  /// The route for the Spin Wheel game screen.
   static const String spinWheelScreen = "/spin-wheel-screen";
+
+  /// The route for the Card Finding game screen.
   static const String cardFindingScreen = "/card_finding-screen";
+
+  /// The route for the Number Slot game screen.
   static const String numberSlotScreen = "/slot_machine-screen";
+
+  /// The route for the Pool Number game screen.
   static const String poolNumberScreen = "/pool_number_screen";
+
+  /// The route for the Play Casino Dice game screen.
   static const String playCasinoDiceScreen = "/play_casino_dice_screen";
+
+  /// The route for the Keno game screen.
   static const String kenoScreen = "/keno_screen";
+
+  /// The route for the Black Jack game screen.
   static const String blackJackScreen = "/black_jack_screen";
+
+  /// The route for the Poker game screen.
   static const String pokerScreen = "/poker_screen";
+
+  /// The route for the Mines game screen.
   static const String minesScreen = "/mines_screen";
+
+  /// The route for the game log screen.
   static const String gameLog = "/game_log_screen";
+
+  /// The route for the referral screen.
   static const String refferalScreen = "/refferal_screen";
+
+  /// The route for the deposit webview screen.
   static const String depositWebViewScreen = '/deposit_webView';
+
+  /// The route for the deposits screen.
   static const String depositsScreen = "/deposits";
+
+  /// The route for the deposit details screen.
   static const String depositsDetailsScreen = "/deposits_details";
+
+  /// The route for the new deposit screen.
   static const String newDepositScreenScreen = "/deposits_money";
+
+  /// The route for the home screen.
   static const String homeScreen = "/home_screen";
 
+  /// A list of all available routes in the application.
   List<GetPage> routes = [
     GetPage(
       name: depositWebViewScreen,
@@ -123,14 +211,12 @@ class RouteHelper {
       name: withdrawConfirmScreenScreen,
       page: () => const WithdrawConfirmScreen(),
     ),
-
     GetPage(name: profileScreen, page: () => const ProfileScreen()),
     GetPage(name: editProfileScreen, page: () => const EditProfileScreen()),
     GetPage(
       name: transactionHistoryScreen,
       page: () => const TransactionsScreen(),
     ),
-
     GetPage(
       name: emailVerificationScreen,
       page: () => const EmailVerificationScreen(),
@@ -149,7 +235,6 @@ class RouteHelper {
       name: twoFactorVerificationScreen,
       page: () => const TwoFactorVerificationScreen(),
     ),
-
     GetPage(name: kycScreen, page: () => const KycScreen()),
     GetPage(name: privacyScreen, page: () => const PrivacyPolicyScreen()),
     GetPage(name: headAndTailScreen, page: () => const HeadTailScreen()),

@@ -11,12 +11,24 @@ import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
 import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
+/// A controller for managing the splash screen's logic and data.
 class SplashController extends GetxController {
+  /// The repository for general settings.
   GeneralSettingRepo repo;
+
+  /// The controller for localization.
   LocalizationController localizationController;
+
+  /// Creates a new [SplashController] instance.
+  ///
+  /// - [repo]: The repository for general settings.
+  /// - [localizationController]: The controller for localization.
   SplashController({required this.repo, required this.localizationController});
 
+  /// A flag indicating whether the screen is currently loading data.
   bool isLoading = true;
+
+  /// Navigates to the next page after the splash screen.
   gotoNextPage() async {
     await loadLanguage();
     bool isRemember =
@@ -36,7 +48,13 @@ class SplashController extends GetxController {
     getGSData(isRemember, isFirstTime);
   }
 
+  /// A flag indicating whether there is an internet connection.
   bool noInternet = false;
+
+  /// Retrieves the general settings data.
+  ///
+  /// - [isRemember]: Whether the user is remembered.
+  /// - [isFirstTime]: Whether it is the user's first time on the app.
   void getGSData(bool isRemember, isFirstTime) async {
     ResponseModel response = await repo.getGeneralSetting();
 
@@ -72,6 +90,7 @@ class SplashController extends GetxController {
     }
   }
 
+  /// Initializes shared data if it doesn't already exist.
   Future<bool> initSharedData() {
     if (!repo.apiClient.sharedPreferences.containsKey(
       SharedPreferenceHelper.countryCode,
@@ -92,6 +111,7 @@ class SplashController extends GetxController {
     return Future.value(true);
   }
 
+  /// Loads the language data.
   Future<void> loadLanguage() async {
     localizationController.loadCurrentLanguage();
     String languageCode = localizationController.locale.languageCode;
@@ -107,7 +127,8 @@ class SplashController extends GetxController {
         value.forEach((key, value) {
           json[key] = value.toString();
         });
-        language['${localizationController.locale.languageCode}_${localizationController.locale.countryCode}'] =
+        language[
+            '${localizationController.locale.languageCode}_${localizationController.locale.countryCode}'] =
             json;
         Get.addTranslations(Messages(languages: language).keys);
       } catch (e) {
@@ -120,6 +141,9 @@ class SplashController extends GetxController {
     }
   }
 
+  /// Saves the language list to shared preferences.
+  ///
+  /// - [languageJson]: The language data in JSON format.
   void saveLanguageList(String languageJson) async {
     await repo.apiClient.sharedPreferences.setString(
       SharedPreferenceHelper.languageListKey,

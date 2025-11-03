@@ -9,6 +9,9 @@ import 'package:verzusxyz/core/utils/my_strings.dart';
 import 'package:verzusxyz/core/utils/style.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_button.dart';
 
+/// Shows a dialog to confirm whether the user wants to exit the application.
+///
+/// - [context]: The build context.
 showExitDialog(BuildContext context) {
   AwesomeDialog(
     padding: const EdgeInsets.symmetric(

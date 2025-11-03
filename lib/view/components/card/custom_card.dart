@@ -2,15 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:verzusxyz/core/utils/dimensions.dart';
 import 'package:verzusxyz/core/utils/util.dart';
 
+/// A custom card widget.
 class CustomCard extends StatefulWidget {
-  final double paddingLeft, paddingRight, paddingTop, paddingBottom;
+  /// The padding on the left side of the card.
+  final double paddingLeft;
+
+  /// The padding on the right side of the card.
+  final double paddingRight;
+
+  /// The padding on the top side of the card.
+  final double paddingTop;
+
+  /// The padding on the bottom side of the card.
+  final double paddingBottom;
+
+  /// The width of the card.
   final double width;
-  // final Color backgroundColor;
+
+  /// The radius of the card's corners.
   final double radius;
+
+  /// The callback function to execute when the card is pressed.
   final VoidCallback? onPressed;
+
+  /// The child widget to display inside the card.
   final Widget child;
+
+  /// Whether the card is pressable.
   final bool isPress;
 
+  /// Creates a new [CustomCard] instance.
   const CustomCard({
     Key? key,
     required this.width,
@@ -18,7 +39,6 @@ class CustomCard extends StatefulWidget {
     this.paddingRight = Dimensions.space15,
     this.paddingTop = Dimensions.space15,
     this.paddingBottom = Dimensions.space15,
-    //  this.backgroundColor = MyColor.colorWhite,
     this.radius = Dimensions.cardRadius,
     this.onPressed,
     this.isPress = false,
@@ -44,7 +64,6 @@ class _CustomCardState extends State<CustomCard> {
                 bottom: widget.paddingBottom,
               ),
               decoration: BoxDecoration(
-                //  color: widget.backgroundColor,
                 borderRadius: BorderRadius.circular(widget.radius),
                 boxShadow: MyUtils.getCardShadow(),
               ),
@@ -60,7 +79,6 @@ class _CustomCardState extends State<CustomCard> {
               bottom: widget.paddingBottom,
             ),
             decoration: BoxDecoration(
-              // color: widget.backgroundColor,
               borderRadius: BorderRadius.circular(widget.radius),
               boxShadow: MyUtils.getCardShadow(),
             ),

@@ -4,14 +4,30 @@ import 'package:verzusxyz/core/utils/dimensions.dart';
 import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/style.dart';
 
+/// A custom button widget for categories.
 class CategoryButton extends StatelessWidget {
+  /// The text to display on the button.
   final String text;
+
+  /// The callback function to execute when the button is pressed.
   final VoidCallback press;
-  final Color color, textColor;
+
+  /// The color of the button.
+  final Color color;
+
+  /// The color of the text.
+  final Color textColor;
+
+  /// The horizontal padding of the button.
   final double horizontalPadding;
+
+  /// The vertical padding of the button.
   final double verticalPadding;
+
+  /// The font size of the text.
   final double textSize;
 
+  /// Creates a new [CategoryButton] instance.
   const CategoryButton({
     Key? key,
     required this.text,

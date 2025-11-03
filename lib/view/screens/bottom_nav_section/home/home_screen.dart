@@ -16,7 +16,9 @@ import 'package:verzusxyz/view/screens/bottom_nav_section/home/widget/top_sectio
 import 'widget/featured_games.dart';
 import 'widget/wallet_and_reward_section.dart';
 
+/// The main screen of the application, displaying the user's dashboard.
 class HomeScreen extends StatefulWidget {
+  /// Creates a new [HomeScreen] instance.
   const HomeScreen({Key? key}) : super(key: key);
 
   @override

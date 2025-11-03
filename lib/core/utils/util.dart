@@ -5,7 +5,9 @@ import 'package:verzusxyz/core/utils/my_color.dart';
 
 import 'my_strings.dart';
 
+/// A utility class with miscellaneous helper methods.
 class MyUtils {
+  /// Sets the system UI overlay style for the splash screen.
   static splashScreen() {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -17,6 +19,7 @@ class MyUtils {
     );
   }
 
+  /// Sets the system UI overlay style for all screens.
   static allScreen() {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -28,6 +31,7 @@ class MyUtils {
     );
   }
 
+  /// Returns a list of [BoxShadow] for a subtle shadow effect.
   static dynamic getShadow() {
     return [
       BoxShadow(
@@ -39,18 +43,22 @@ class MyUtils {
     ];
   }
 
+  /// Returns the required sign character.
   static String getRequiredSign() {
     return "*";
   }
 
+  /// Returns the percent sign character.
   static String getPercentSign() {
     return "%";
   }
 
+  /// Returns the multiplication sign character.
   static String getIntoSign() {
     return "X ";
   }
 
+  /// Returns a list of [BoxShadow] for a bottom sheet shadow effect.
   static dynamic getBottomSheetShadow() {
     return [
       BoxShadow(
@@ -62,6 +70,7 @@ class MyUtils {
     ];
   }
 
+  /// Returns a list of [BoxShadow] for a card shadow effect.
   static dynamic getCardShadow() {
     return [
       BoxShadow(
@@ -73,6 +82,10 @@ class MyUtils {
     ];
   }
 
+  /// Formats a string to be used as an operation title.
+  ///
+  /// - [value]: The string to format.
+  /// - Returns a formatted title string.
   static getOperationTitle(String value) {
     String number = value;
     RegExp regExp = RegExp(r'^(\d+)(\w+)$');

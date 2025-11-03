@@ -7,6 +7,13 @@ import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
 import 'package:verzusxyz/data/repo/splash/splash_repo.dart';
 import 'package:verzusxyz/data/services/api_service.dart';
 
+/// Initializes and registers all the necessary dependencies for the application.
+///
+/// This function sets up and injects controllers, repositories, and other services
+/// using the `Get` library for dependency management. It also initializes
+/// `SharedPreferences` for local storage.
+///
+/// - Returns a [Future] that completes with a map of language codes to language data.
 Future<Map<String, Map<String, String>>> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
 

@@ -11,7 +11,9 @@ import 'package:verzusxyz/view/screens/bottom_nav_section/wallet/wallet_screen.d
 import 'package:get/get.dart';
 import 'nav_bar_item_widget.dart';
 
+/// A widget that displays the bottom navigation bar.
 class BottomNavBar extends StatefulWidget {
+  /// Creates a new [BottomNavBar] instance.
   const BottomNavBar({Key? key}) : super(key: key);
 
   @override
@@ -19,6 +21,7 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
+  /// The list of screens to display in the bottom navigation bar.
   List<Widget> screens = [
     const HomeScreen(),
     const GamesScreen(),
@@ -26,6 +29,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
     const MenuScreen(),
   ];
 
+  /// The index of the currently selected screen.
   int currentIndex = 0;
 
   @override
@@ -68,7 +72,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   });
                 },
               ),
-
               NavBarItem(
                 label: MyStrings.games.tr.toUpperCase(),
                 imagePath: MyImages.games,
@@ -80,7 +83,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   });
                 },
               ),
-
               NavBarItem(
                 label: MyStrings.wallet.tr.toUpperCase(),
                 imagePath: MyImages.wallet,
@@ -92,7 +94,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   });
                 },
               ),
-
               NavBarItem(
                 label: MyStrings.profile.tr.toUpperCase(),
                 imagePath: MyImages.navProfile,

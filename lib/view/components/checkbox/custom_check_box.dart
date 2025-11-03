@@ -3,11 +3,18 @@ import 'package:get/get.dart';
 import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/style.dart';
 
+/// A custom checkbox widget.
 class CustomCheckBox extends StatefulWidget {
+  /// The list of selected values.
   final List<String>? selectedValue;
+
+  /// The list of checkbox options.
   final List<String> list;
+
+  /// The callback function to execute when the checkbox value changes.
   final ValueChanged? onChanged;
 
+  /// Creates a new [CustomCheckBox] instance.
   const CustomCheckBox({
     Key? key,
     this.selectedValue,

@@ -6,13 +6,33 @@ import '../../../core/utils/my_color.dart';
 import '../../screens/withdraw/widget/status_widget.dart';
 import '../divider/custom_divider.dart';
 
+/// A custom row widget that displays two text elements.
 class CustomRow extends StatelessWidget {
-  final String firstText, lastText;
-  final bool isStatus, isAbout, showDivider;
+  /// The first text element to display.
+  final String firstText;
+
+  /// The last text element to display.
+  final String lastText;
+
+  /// Whether the row represents a status.
+  final bool isStatus;
+
+  /// Whether the row is used in an "about" section.
+  final bool isAbout;
+
+  /// Whether to show a divider below the row.
+  final bool showDivider;
+
+  /// The color of the status text.
   final Color? statusTextColor;
+
+  /// Whether the row has a child widget.
   final bool hasChild;
+
+  /// The child widget to display in the row.
   final Widget? child;
 
+  /// Creates a new [CustomRow] instance.
   const CustomRow({
     Key? key,
     this.child,
@@ -54,62 +74,63 @@ class CustomRow extends StatelessWidget {
             ],
           )
         : isAbout
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                firstText.tr,
-                style: regularDefault.copyWith(color: MyColor.colorWhite),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                lastText.tr,
-                style: regularDefault.copyWith(
-                  fontFamily: "Inter",
-                  color: isStatus ? statusTextColor : MyColor.colorWhite,
-                ),
-              ),
-              const SizedBox(height: 5),
-            ],
-          )
-        : Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Flexible(
-                    child: Text(
-                      firstText.tr,
-                      style: regularDefault.copyWith(
-                        color: MyColor.colorWhite,
-                        fontFamily: 'Inter',
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                  Text(
+                    firstText.tr,
+                    style: regularDefault.copyWith(color: MyColor.colorWhite),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    lastText.tr,
+                    style: regularDefault.copyWith(
+                      fontFamily: "Inter",
+                      color: isStatus ? statusTextColor : MyColor.colorWhite,
                     ),
                   ),
-                  isStatus
-                      ? StatusWidget(status: lastText, color: MyColor.greenP)
-                      : Flexible(
-                          child: Text(
-                            lastText.tr,
-                            maxLines: 2,
-                            style: regularDefault.copyWith(
-                              fontFamily: "Inter",
-                              color: isStatus
-                                  ? MyColor.greenSuccessColor
-                                  : MyColor.colorWhite,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
+                  const SizedBox(height: 5),
                 ],
-              ),
-              const SizedBox(height: 5),
-              showDivider ? const CustomDivider() : const SizedBox(),
-              showDivider ? const SizedBox(height: 5) : const SizedBox(),
-            ],
-          );
+              )
+            : Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          firstText.tr,
+                          style: regularDefault.copyWith(
+                            color: MyColor.colorWhite,
+                            fontFamily: 'Inter',
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      isStatus
+                          ? StatusWidget(
+                              status: lastText, color: MyColor.greenP)
+                          : Flexible(
+                              child: Text(
+                                lastText.tr,
+                                maxLines: 2,
+                                style: regularDefault.copyWith(
+                                  fontFamily: "Inter",
+                                  color: isStatus
+                                      ? MyColor.greenSuccessColor
+                                      : MyColor.colorWhite,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                              ),
+                            ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  showDivider ? const CustomDivider() : const SizedBox(),
+                  showDivider ? const SizedBox(height: 5) : const SizedBox(),
+                ],
+              );
   }
 }
