@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1087990046297",
+    "project_id": "verzusxyz-og",
+    "storage_bucket": "verzusxyz-og.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1087990046297:android:a75daed1535f7766f21b48",
+        "android_client_info": {
+          "package_name": "aa.verzus.xyz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC57dZH78--NIsI5dSfJRezbicwcnFch8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
