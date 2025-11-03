@@ -15,7 +15,12 @@ import 'package:verzusxyz/view/components/text/default_text.dart';
 
 import '../../../../components/buttons/gradient_rounded_button.dart';
 
+/// A widget that displays the "Verify Forgot Password" screen.
+///
+/// This screen allows the user to enter the verification code they received in
+/// their email to proceed with resetting their password.
 class VerifyForgetPassScreen extends StatefulWidget {
+  /// Creates a new [VerifyForgetPassScreen] instance.
   const VerifyForgetPassScreen({Key? key}) : super(key: key);
 
   @override
@@ -25,13 +30,11 @@ class VerifyForgetPassScreen extends StatefulWidget {
 class _VerifyForgetPassScreenState extends State<VerifyForgetPassScreen> {
   @override
   void initState() {
+    super.initState();
     Get.put(ApiClient(sharedPreferences: Get.find()));
     Get.put(LoginRepo(apiClient: Get.find()));
     final controller = Get.put(VerifyPasswordController(loginRepo: Get.find()));
-
     controller.email = Get.arguments;
-
-    super.initState();
   }
 
   @override

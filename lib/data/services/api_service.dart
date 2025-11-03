@@ -11,24 +11,32 @@ import 'package:verzusxyz/data/model/authorization/authorization_response_model.
 import 'package:verzusxyz/data/model/general_setting/general_setting_response_model.dart';
 import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
 
-/// A service class for handling API requests.
+/// A service class for handling API requests and responses.
+///
+/// This class is responsible for making HTTP requests to the backend API,
+/// handling authentication, and managing responses. It also interacts with
+/// `SharedPreferences` to persist data locally.
 class ApiClient extends GetxService {
-  /// The shared preferences instance for storing and retrieving data.
-  SharedPreferences sharedPreferences;
+  /// The shared preferences instance for storing and retrieving data locally.
+  final SharedPreferences sharedPreferences;
 
   /// Creates a new [ApiClient] instance.
   ///
-  /// - [sharedPreferences]: The shared preferences instance.
+  /// Requires a [SharedPreferences] instance for local data persistence.
   ApiClient({required this.sharedPreferences});
 
-  /// Sends an API request.
+  /// Sends an API request to the specified [uri] using the given [method].
+  ///
+  /// This function handles different HTTP methods, including GET, POST, DELETE, and PATCH.
+  /// It also manages authentication headers and response parsing.
   ///
   /// - [uri]: The request URI.
   /// - [method]: The HTTP method (e.g., 'GET', 'POST').
   /// - [params]: The request parameters.
-  /// - [passHeader]: Whether to include the authorization header.
-  /// - [isOnlyAcceptType]: Whether to only include the 'Accept' header.
-  /// - Returns a [ResponseModel] with the API response.
+  /// - [passHeader]: Whether to include the authorization header. Defaults to `false`.
+  /// - [isOnlyAcceptType]: Whether to only include the 'Accept' header. Defaults to `false`.
+  /// - Returns a [ResponseModel] containing the API response. If the request fails,
+  ///   the [ResponseModel] will contain an error message.
   Future<ResponseModel> request(
     String uri,
     String method,
@@ -59,20 +67,6 @@ class ApiClient extends GetxService {
               },
             );
           }
-        } else {
-          response = await http.post(url, body: params);
-        }
-      } else if (method == Method.postMethod) {
-        if (passHeader) {
-          initToken();
-          response = await http.post(
-            url,
-            body: params,
-            headers: {
-              "Accept": "application/json",
-              "Authorization": "$tokenType $token",
-            },
-          );
         } else {
           response = await http.post(url, body: params);
         }
@@ -155,14 +149,17 @@ class ApiClient extends GetxService {
     }
   }
 
-  /// The authentication token.
+  /// The authentication token used for API requests.
   String token = '';
 
-  /// The authentication token type.
+  /// The type of the authentication token (e.g., 'Bearer').
   String tokenType = '';
 
-  /// Initializes the authentication token from shared preferences.
-  initToken() {
+  /// Initializes the authentication token from `SharedPreferences`.
+  ///
+  /// This method retrieves the stored access token and token type. If they are not
+  /// found, it sets them to empty strings.
+  void initToken() {
     if (sharedPreferences.containsKey(SharedPreferenceHelper.accessTokenKey)) {
       String? t = sharedPreferences.getString(
         SharedPreferenceHelper.accessTokenKey,
@@ -178,16 +175,21 @@ class ApiClient extends GetxService {
     }
   }
 
-  /// Stores the general settings in shared preferences.
+  /// Stores the general settings in `SharedPreferences`.
   ///
-  /// - [model]: The general settings response model.
-  storeGeneralSetting(GeneralSettingResponseModel model) {
+  /// This method serializes the [GeneralSettingResponseModel] to a JSON string
+  /// and persists it.
+  ///
+  /// - [model]: The general settings response model to store.
+  void storeGeneralSetting(GeneralSettingResponseModel model) {
     String json = jsonEncode(model.toJson());
     sharedPreferences.setString(SharedPreferenceHelper.generalSettingKey, json);
     getGSData();
   }
 
-  /// Retrieves the general settings from shared preferences.
+  /// Retrieves the general settings from `SharedPreferences`.
+  ///
+  /// This method deserializes the stored JSON string into a [GeneralSettingResponseModel].
   ///
   /// - Returns a [GeneralSettingResponseModel] with the general settings.
   GeneralSettingResponseModel getGSData() {
@@ -199,10 +201,13 @@ class ApiClient extends GetxService {
     return model;
   }
 
-  /// Retrieves the currency or username from shared preferences.
+  /// Retrieves the currency or username from `SharedPreferences`.
   ///
-  /// - [isCurrency]: Whether to retrieve the currency.
-  /// - [isSymbol]: Whether to retrieve the currency symbol.
+  /// This method can fetch either the currency symbol/text or the username based on
+  /// the [isCurrency] flag.
+  ///
+  /// - [isCurrency]: Whether to retrieve the currency. Defaults to `true`.
+  /// - [isSymbol]: Whether to retrieve the currency symbol. Defaults to `false`.
   /// - Returns the currency or username as a string.
   String getCurrencyOrUsername({
     bool isCurrency = true,
@@ -227,7 +232,7 @@ class ApiClient extends GetxService {
     }
   }
 
-  /// Retrieves the social credentials redirect URL from shared preferences.
+  /// Retrieves the social credentials redirect URL from `SharedPreferences`.
   ///
   /// - Returns the redirect URL as a string.
   String getSocialCredentialsRedirectUrl() {
@@ -240,7 +245,7 @@ class ApiClient extends GetxService {
     return redirect;
   }
 
-  /// Retrieves the social credentials configuration data from shared preferences.
+  /// Retrieves the social credentials configuration data from `SharedPreferences`.
   ///
   /// - Returns a [SocialiteCredentials] object with the social credentials.
   SocialiteCredentials getSocialCredentialsConfigData() {
@@ -256,16 +261,18 @@ class ApiClient extends GetxService {
     return social;
   }
 
-  /// Checks if all social credentials are enabled.
+  /// Checks if all social login providers are enabled.
   ///
-  /// - Returns `true` if all social credentials are enabled, otherwise `false`.
+  /// This method checks the status of Google, LinkedIn, and Facebook login providers.
+  ///
+  /// - Returns `true` if all social login providers are enabled, otherwise `false`.
   bool getSocialCredentialsEnabledAll() {
     return getSocialCredentialsConfigData().google?.status == '1' &&
         getSocialCredentialsConfigData().linkedin?.status == '1' &&
         getSocialCredentialsConfigData().facebook?.status == '1';
   }
 
-  /// Retrieves the user's email from shared preferences.
+  /// Retrieves the user's email from `SharedPreferences`.
   ///
   /// - Returns the user's email as a string.
   String getUserEmail() {
@@ -274,7 +281,7 @@ class ApiClient extends GetxService {
     return email;
   }
 
-  /// Checks if the password strength check is enabled.
+  /// Checks if the password strength check is enabled in the general settings.
   ///
   /// - Returns `true` if the password strength check is enabled, otherwise `false`.
   bool getPasswordStrengthStatus() {
@@ -290,7 +297,7 @@ class ApiClient extends GetxService {
     return checkPasswordStrength;
   }
 
-  /// Retrieves the name of the active template.
+  /// Retrieves the name of the active theme template from the general settings.
   ///
   /// - Returns the template name as a string.
   String getTemplateName() {
