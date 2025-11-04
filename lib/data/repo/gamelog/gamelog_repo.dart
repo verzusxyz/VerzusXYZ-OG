@@ -1,23 +1,29 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+/// A repository class for handling game logs with Firebase.
 class GameLogRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  GameLogRepo({required this.apiClient});
-
-  Future<ResponseModel> gameLog() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.gameLog}';
-
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-
-    return responseModel;
+  /// Retrieves the game logs for the current user.
+  ///
+  /// - Returns a list of [QueryDocumentSnapshot]s representing the game logs.
+  Future<List<QueryDocumentSnapshot>> getGameLogs() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final QuerySnapshot querySnapshot = await _firestore
+            .collection('gameLogs')
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('createdAt', descending: true)
+            .get();
+        return querySnapshot.docs;
+      }
+      return [];
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+      return [];
+    }
   }
 }

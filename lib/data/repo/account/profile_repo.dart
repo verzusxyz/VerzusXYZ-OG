@@ -1,106 +1,50 @@
-import 'dart:convert';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:verzusxyz/data/model/profile/profile_post_model.dart';
-import 'package:verzusxyz/data/model/profile_complete/profile_complete_post_model.dart';
-import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/authorization/authorization_response_model.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
-import 'package:verzusxyz/data/services/push_notification_service.dart';
-import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
+/// A repository class for handling user profile data with Firebase.
 class ProfileRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  ProfileRepo({required this.apiClient});
-
-  Future<bool> updateProfile(ProfilePostModel model, bool isProfile) async {
+  /// Retrieves the profile information for the current user.
+  ///
+  /// - Returns a [DocumentSnapshot] containing the user's profile data.
+  Future<DocumentSnapshot?> loadProfileInfo() async {
     try {
-      apiClient.initToken();
-
-      String url =
-          '${UrlContainer.baseUrl}${isProfile ? UrlContainer.updateProfileEndPoint : UrlContainer.profileCompleteEndPoint}';
-
-      var request = http.MultipartRequest('POST', Uri.parse(url));
-      Map<String, String> finalMap = {
-        'firstname': model.firstname,
-        'lastname': model.lastName,
-        'address': model.address ?? '',
-        'zip': model.zip ?? '',
-        'state': model.state ?? "",
-        'city': model.city ?? '',
-      };
-
-      request.headers.addAll(<String, String>{
-        'Authorization': 'Bearer ${apiClient.token}',
-      });
-      /*if(model.image!=null){
-        request.files.add( http.MultipartFile('image', model.image!.readAsBytes().asStream(), model.image!.lengthSync(), filename: model.image!.path.split('/').last));
-      }*/
-      request.fields.addAll(finalMap);
-
-      http.StreamedResponse response = await request.send();
-
-      String jsonResponse = await response.stream.bytesToString();
-      AuthorizationResponseModel authorizationResponseModel =
-          AuthorizationResponseModel.fromJson(jsonDecode(jsonResponse));
-
-      if (authorizationResponseModel.status?.toLowerCase() ==
-          MyStrings.success.toLowerCase()) {
-        CustomSnackBar.success(
-          successList:
-              authorizationResponseModel.message?.success ??
-              [MyStrings.success],
-        );
-        return true;
-      } else {
-        CustomSnackBar.error(
-          errorList:
-              authorizationResponseModel.message?.error ??
-              [MyStrings.requestFail.tr],
-        );
-        return false;
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        return await _firestore.collection('users').doc(user.uid).get();
       }
+      return null;
     } catch (e) {
-      return false;
+      print('An unexpected error occurred: $e');
+      return null;
     }
   }
 
-  Future<ResponseModel> completeProfile(ProfileCompletePostModel model) async {
-    dynamic params = model.toMap();
-    String url =
-        '${UrlContainer.baseUrl}${UrlContainer.profileCompleteEndPoint}';
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.postMethod,
-      params,
-      passHeader: true,
-    );
-    return responseModel;
-  }
-
-  Future<ResponseModel> loadProfileInfo() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.getProfileEndPoint}';
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return responseModel;
-  }
-
-  Future<dynamic> getCountryList() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.countryEndPoint}';
-    ResponseModel model = await apiClient.request(url, Method.getMethod, null);
-    return model;
-  }
-
-  Future<void> updateDeviceToken() async {
-    await PushNotificationService(apiClient: Get.find()).sendUserToken();
+  /// Updates the profile information for the current user.
+  ///
+  /// - [model]: The updated profile data.
+  /// - Returns `true` if the update is successful, otherwise `false`.
+  Future<bool> updateProfile(ProfilePostModel model) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        await _firestore.collection('users').doc(user.uid).update({
+          'firstname': model.firstname,
+          'lastname': model.lastName,
+          'address': model.address,
+          'zip': model.zip,
+          'state': model.state,
+          'city': model.city,
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+      return false;
+    }
   }
 }
