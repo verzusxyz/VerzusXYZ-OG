@@ -5,18 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/data/repo/all-games/rock_paper_scissors/rock_paper_scissors_repo.dart';
+import 'package:verzusxyz/data/repo/all-games/roulete/roulette_repo.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
-enum Choice { rock, paper, scissors }
-
-class RockPaperScissorsController extends GetxController {
-  final RockPaperScissorsRepo rockPaperScissorsRepo;
+class RouletteController extends GetxController {
+  final RouletteRepo rouletteRepo;
   final String walletType;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  RockPaperScissorsController({required this.rockPaperScissorsRepo, required this.walletType});
+  RouletteController({required this.rouletteRepo, required this.walletType});
 
   TextEditingController amountController = TextEditingController();
   var amountFocusNode = FocusNode();
@@ -32,8 +30,8 @@ class RockPaperScissorsController extends GetxController {
   String maximum = "0.00";
   String winningPercentage = "";
 
-  Choice? userChoice;
-  Choice? computerChoice;
+  List<int> selectedNumbers = [];
+  int? adminSelectedNum;
 
   @override
   void onInit() {
@@ -55,11 +53,11 @@ class RockPaperScissorsController extends GetxController {
           availableBalance = (userDoc['demoBalance'] ?? 0).toStringAsFixed(2);
         }
       }
-      name = "Rock Paper Scissors";
-      instruction = "Choose one to play.";
+      name = "Roulette";
+      instruction = "Bet on a number, color, or group of numbers.";
       minimum = "1";
       maximum = "100";
-      winningPercentage = "100";
+      winningPercentage = "3500"; // For a single number bet
     } catch (e) {
       CustomSnackBar.error(errorList: ['Failed to load game info.']);
     } finally {
@@ -69,8 +67,8 @@ class RockPaperScissorsController extends GetxController {
   }
 
   Future<void> submitInvestmentRequest() async {
-    if (userChoice == null) {
-      CustomSnackBar.error(errorList: ['Please select an option.']);
+    if (selectedNumbers.isEmpty) {
+      CustomSnackBar.error(errorList: ['Please select a number to bet on.']);
       return;
     }
 
@@ -83,16 +81,16 @@ class RockPaperScissorsController extends GetxController {
         return;
       }
 
-      gameId = await rockPaperScissorsRepo.createNewGame(
+      gameId = await rouletteRepo.createNewGame(
         investAmount: amount,
         walletType: walletType,
-        userChoice: userChoice.toString().split('.').last,
+        userChoice: selectedNumbers.join(','),
       );
 
       if (gameId != null) {
         // Mocking the game result
-        computerChoice = Choice.values[Random().nextInt(3)];
-        final bool userWon = _getWinner(userChoice!, computerChoice!);
+        adminSelectedNum = Random().nextInt(37);
+        final bool userWon = selectedNumbers.contains(adminSelectedNum);
         await endTheGame(userWon);
       } else {
         CustomSnackBar.error(errorList: ['Failed to start the game.']);
@@ -105,24 +103,16 @@ class RockPaperScissorsController extends GetxController {
     }
   }
 
-  bool _getWinner(Choice user, Choice computer) {
-    if (user == computer) return false; // Draw
-    if (user == Choice.rock && computer == Choice.scissors) return true;
-    if (user == Choice.paper && computer == Choice.rock) return true;
-    if (user == Choice.scissors && computer == Choice.paper) return true;
-    return false;
-  }
-
   Future<void> endTheGame(bool userWon) async {
     final double amount = double.parse(amountController.text);
-    final double winnings = userWon ? amount : -amount;
-    await rockPaperScissorsRepo.endGame(gameId!, userWon, winnings, walletType);
+    final double winnings = userWon ? (amount * (36 / selectedNumbers.length)) - amount : -amount;
+    await rouletteRepo.endGame(gameId!, userWon, winnings, walletType);
     await loadGameInfo(); // Refresh balance
     // Show a dialog or snackbar for win/loss
     Get.defaultDialog(
       title: userWon ? "You Won!" : "You Lost!",
       middleText:
-          "You chose ${userChoice.toString().split('.').last}, computer chose ${computerChoice.toString().split('.').last}.\nYour new balance is $availableBalance",
+          "The winning number was $adminSelectedNum.\nYour new balance is $availableBalance",
       actions: [
         TextButton(
           onPressed: () {
@@ -138,13 +128,17 @@ class RockPaperScissorsController extends GetxController {
   void resetGame() {
     amountController.clear();
     gameId = null;
-    userChoice = null;
-    computerChoice = null;
+    selectedNumbers.clear();
+    adminSelectedNum = null;
     update();
   }
 
-  void setUserChoice(Choice choice) {
-    userChoice = choice;
+  void selectNumber(int number) {
+    if (selectedNumbers.contains(number)) {
+      selectedNumbers.remove(number);
+    } else {
+      selectedNumbers.add(number);
+    }
     update();
   }
 }

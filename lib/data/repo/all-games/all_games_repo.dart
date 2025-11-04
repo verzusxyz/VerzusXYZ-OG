@@ -1,21 +1,14 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AllGanmesRepo {
-  ApiClient apiClient;
-  AllGanmesRepo({required this.apiClient});
+class AllGamesRepo {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<ResponseModel> loadData() async {
-    String url = "${UrlContainer.baseUrl}${UrlContainer.dashBoardUrl}";
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-
-    return responseModel;
+  Future<QuerySnapshot> loadData() async {
+    try {
+      return await _firestore.collection('games').get();
+    } catch (e) {
+      print('Error loading games: $e');
+      rethrow;
+    }
   }
 }

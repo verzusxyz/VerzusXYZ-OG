@@ -1,15 +1,14 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PrivacyRepo {
-  ApiClient apiClient;
-  PrivacyRepo({required this.apiClient});
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<dynamic> loadAboutData() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.privacyPolicyEndPoint}';
-
-    final response = await apiClient.request(url, Method.getMethod, null);
-    return response;
+  Future<DocumentSnapshot> loadAboutData() async {
+    try {
+      return await _firestore.collection('policies').doc('privacy').get();
+    } catch (e) {
+      print('Error loading privacy policy: $e');
+      rethrow;
+    }
   }
 }

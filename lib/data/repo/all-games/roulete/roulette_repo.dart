@@ -1,56 +1,78 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+/// A repository class for handling Roulette game logic with Firebase.
 class RouletteRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  RouletteRepo({required this.apiClient});
-
-  Future<ResponseModel> submitAnswer(String invest, String choose) async {
-    String chooseBet = choose.isEmpty
-        ? ""
-        : choose.toString().replaceAll('[', '').replaceAll(']', '');
-
-    Map<String, String> map = {
-      'invest': invest.toString(),
-      'choose': chooseBet.toString(),
-    };
-
-    String url = '${UrlContainer.baseUrl}${UrlContainer.rouletteSubmitAnswer}';
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    print("roulette response +${res.responseJson}");
-    return res;
+  /// Creates a new Roulette game document in Firestore.
+  ///
+  /// - [investAmount]: The amount the user is betting.
+  /// - [walletType]: The wallet to use ('live' or 'demo').
+  /// - [userChoice]: The user's choice.
+  /// - Returns the ID of the new game document.
+  Future<String?> createNewGame({
+    required double investAmount,
+    required String walletType,
+    required String userChoice,
+  }) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final docRef = await _firestore.collection('gameLogs').add({
+          'userId': user.uid,
+          'gameType': 'roulette',
+          'investAmount': investAmount,
+          'walletType': walletType,
+          'userChoice': userChoice,
+          'status': 'in-progress',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return docRef.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error creating new game: $e');
+      return null;
+    }
   }
 
-  Future<ResponseModel> getAnswer(String gameID) async {
-    Map<String, String> map = {'gameLog_id': gameID.toString()};
-    String url = '${UrlContainer.baseUrl}${UrlContainer.rouletteResult}';
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    print("roulette ans response +${res.responseJson}");
-    return res;
-  }
+  /// Ends the game and updates the user's balance.
+  ///
+  /// - [gameId]: The ID of the game log document.
+  /// - [userWon]: Whether the user won the game.
+  /// - [winnings]: The amount the user won or lost.
+  /// - [walletType]: The wallet to update.
+  Future<void> endGame(
+    String gameId,
+    bool userWon,
+    double winnings,
+    String walletType,
+  ) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final userRef = _firestore.collection('users').doc(user.uid);
+        final gameLogRef = _firestore.collection('gameLogs').doc(gameId);
 
-  Future<dynamic> loadData() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.roulettedata}';
+        await _firestore.runTransaction((transaction) async {
+          final userDoc = await transaction.get(userRef);
+          final balanceField =
+              walletType == 'live' ? 'liveBalance' : 'demoBalance';
+          final currentBalance = userDoc[balanceField] ?? 0;
 
-    final response = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return response;
+          transaction
+              .update(userRef, {balanceField: currentBalance + winnings});
+          transaction.update(gameLogRef, {
+            'status': 'completed',
+            'winStatus': userWon ? 'win' : 'lose',
+            'winnings': winnings,
+          });
+        });
+      }
+    } catch (e) {
+      print('Error ending game: $e');
+    }
   }
 }

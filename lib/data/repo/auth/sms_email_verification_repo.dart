@@ -1,76 +1,31 @@
-import 'dart:convert';
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/authorization/authorization_response_model.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
+import 'package:get/get.dart';
+import 'package:verzusxyz/core/utils/my_strings.dart';
 
 class SmsEmailVerificationRepo {
-  ApiClient apiClient;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  SmsEmailVerificationRepo({required this.apiClient});
-
-  Future<ResponseModel> verify(
-    String code, {
-    bool isEmail = true,
-    bool isTFA = false,
-  }) async {
-    final map = {'code': code};
-    String url =
-        '${UrlContainer.baseUrl}${isEmail ? UrlContainer.verifyEmailEndPoint : UrlContainer.verifySmsEndPoint}';
-
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-
-    return responseModel;
-  }
-
-  Future<ResponseModel> sendAuthorizationRequest() async {
-    String url =
-        '${UrlContainer.baseUrl}${UrlContainer.authorizationCodeEndPoint}';
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return responseModel;
-  }
-
-  Future<bool> resendVerifyCode({required bool isEmail}) async {
-    final url =
-        '${UrlContainer.baseUrl}${UrlContainer.resendVerifyCodeEndPoint}${isEmail ? 'email' : 'mobile'}';
-    ResponseModel response = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-
-    if (response.statusCode == 200) {
-      AuthorizationResponseModel model = AuthorizationResponseModel.fromJson(
-        jsonDecode(response.responseJson),
-      );
-
-      if (model.status == 'error') {
-        CustomSnackBar.error(
-          errorList: model.message?.error ?? [MyStrings.resendCodeFail],
-        );
-        return false;
-      } else {
-        CustomSnackBar.success(
-          successList:
-              model.message?.success ?? [MyStrings.successfullyCodeResend],
-        );
+  Future<bool> sendVerificationEmail() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        CustomSnackBar.success(successList: [MyStrings.verificationEmailSent.tr]);
         return true;
       }
-    } else {
+      return false;
+    } catch (e) {
+      CustomSnackBar.error(errorList: [MyStrings.requestFail.tr]);
+      return false;
+    }
+  }
+
+  Future<bool> isEmailVerified() async {
+    try {
+      await _auth.currentUser?.reload();
+      return _auth.currentUser?.emailVerified ?? false;
+    } catch (e) {
       return false;
     }
   }
