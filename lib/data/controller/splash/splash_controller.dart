@@ -12,24 +12,33 @@ import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
 /// A controller for managing the splash screen's logic and data.
+///
+/// This class handles the initialization of the application, including loading
+/// general settings, language data, and determining the appropriate next screen
+/// to navigate to.
 class SplashController extends GetxController {
-  /// The repository for general settings.
-  GeneralSettingRepo repo;
+  /// The repository for fetching general settings and language data.
+  final GeneralSettingRepo repo;
 
-  /// The controller for localization.
-  LocalizationController localizationController;
+  /// The controller for managing localization and language settings.
+  final LocalizationController localizationController;
 
   /// Creates a new [SplashController] instance.
   ///
-  /// - [repo]: The repository for general settings.
-  /// - [localizationController]: The controller for localization.
+  /// Requires a [GeneralSettingRepo] and a [LocalizationController].
   SplashController({required this.repo, required this.localizationController});
 
-  /// A flag indicating whether the screen is currently loading data.
+  /// A flag indicating whether the splash screen is currently loading data.
   bool isLoading = true;
 
-  /// Navigates to the next page after the splash screen.
-  gotoNextPage() async {
+  /// A flag indicating whether there is an internet connection.
+  bool noInternet = false;
+
+  /// Initiates the process of loading initial data and navigating to the next screen.
+  ///
+  /// This method loads the selected language, checks if the user is remembered,
+  /// and fetches the general settings from the backend.
+  void gotoNextPage() async {
     await loadLanguage();
     bool isRemember =
         repo.apiClient.sharedPreferences.getBool(
@@ -48,14 +57,11 @@ class SplashController extends GetxController {
     getGSData(isRemember, isFirstTime);
   }
 
-  /// A flag indicating whether there is an internet connection.
-  bool noInternet = false;
-
-  /// Retrieves the general settings data.
+  /// Retrieves the general settings data from the backend.
   ///
-  /// - [isRemember]: Whether the user is remembered.
-  /// - [isFirstTime]: Whether it is the user's first time on the app.
-  void getGSData(bool isRemember, isFirstTime) async {
+  /// - [isRemember]: A boolean indicating if the user's session is remembered.
+  /// - [isFirstTime]: A boolean indicating if it's the user's first time on the app.
+  void getGSData(bool isRemember, bool isFirstTime) async {
     ResponseModel response = await repo.getGeneralSetting();
 
     if (response.statusCode == 200) {
@@ -90,12 +96,14 @@ class SplashController extends GetxController {
     }
   }
 
-  /// Initializes shared data if it doesn't already exist.
-  Future<bool> initSharedData() {
+  /// Initializes shared data in `SharedPreferences` if it doesn't already exist.
+  ///
+  /// This method sets the default country and language codes.
+  Future<void> initSharedData() async {
     if (!repo.apiClient.sharedPreferences.containsKey(
       SharedPreferenceHelper.countryCode,
     )) {
-      return repo.apiClient.sharedPreferences.setString(
+      await repo.apiClient.sharedPreferences.setString(
         SharedPreferenceHelper.countryCode,
         MyStrings.languages[0].countryCode,
       );
@@ -103,15 +111,17 @@ class SplashController extends GetxController {
     if (!repo.apiClient.sharedPreferences.containsKey(
       SharedPreferenceHelper.languageCode,
     )) {
-      return repo.apiClient.sharedPreferences.setString(
+      await repo.apiClient.sharedPreferences.setString(
         SharedPreferenceHelper.languageCode,
         MyStrings.languages[0].languageCode,
       );
     }
-    return Future.value(true);
   }
 
-  /// Loads the language data.
+  /// Loads the language data from the backend.
+  ///
+  /// This method fetches the language strings for the currently selected language
+  /// and adds them to the GetX translations.
   Future<void> loadLanguage() async {
     localizationController.loadCurrentLanguage();
     String languageCode = localizationController.locale.languageCode;
@@ -141,15 +151,13 @@ class SplashController extends GetxController {
     }
   }
 
-  /// Saves the language list to shared preferences.
+  /// Saves the language list to `SharedPreferences`.
   ///
-  /// - [languageJson]: The language data in JSON format.
+  /// - [languageJson]: The language data in JSON string format.
   void saveLanguageList(String languageJson) async {
     await repo.apiClient.sharedPreferences.setString(
       SharedPreferenceHelper.languageListKey,
       languageJson,
     );
-    print('language json: $languageJson');
-    return;
   }
 }

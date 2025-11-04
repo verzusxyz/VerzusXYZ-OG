@@ -8,7 +8,12 @@ import 'package:verzusxyz/data/repo/auth/login_repo.dart';
 import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/will_pop_widget.dart';
 
+/// A widget that displays the login screen of the application.
+///
+/// This widget is responsible for initializing the `LoginController` and
+/// displaying the login form.
 class LoginScreen extends StatefulWidget {
+  /// Creates a new [LoginScreen] instance.
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
@@ -20,11 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void initState() {
+    super.initState();
     Get.put(ApiClient(sharedPreferences: Get.find()));
     Get.put(LoginRepo(apiClient: Get.find()));
     Get.put(LoginController(loginRepo: Get.find()));
-
-    super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.find<LoginController>().remember = false;

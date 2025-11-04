@@ -7,13 +7,16 @@ import 'package:verzusxyz/core/utils/my_strings.dart';
 import '../../model/language/language_model.dart';
 
 /// A controller for managing the application's localization and language settings.
+///
+/// This class is responsible for loading the current language, setting a new language,
+/// and persisting the selected language using `SharedPreferences`.
 class LocalizationController extends GetxController {
   /// The shared preferences instance for storing and retrieving language settings.
   final SharedPreferences sharedPreferences;
 
   /// Creates a new [LocalizationController] instance.
   ///
-  /// - [sharedPreferences]: The shared preferences instance.
+  /// Requires a [SharedPreferences] instance and loads the current language upon initialization.
   LocalizationController({required this.sharedPreferences}) {
     loadCurrentLanguage();
   }
@@ -28,13 +31,16 @@ class LocalizationController extends GetxController {
   /// The currently selected locale.
   Locale get locale => _locale;
 
-  /// Whether the current language is left-to-right.
+  /// A boolean indicating whether the current language is left-to-right.
   bool get isLtr => _isLtr;
 
   /// The list of available languages.
   List<LanguageModel> get languages => _languages;
 
-  /// Sets the application's language.
+  /// Sets the application's language and updates the locale.
+  ///
+  /// This method updates the locale using GetX, sets the text direction, and saves
+  /// the new language to `SharedPreferences`.
   ///
   /// - [locale]: The new locale to set.
   void setLanguage(Locale locale) {
@@ -49,7 +55,10 @@ class LocalizationController extends GetxController {
     update();
   }
 
-  /// Loads the current language from shared preferences.
+  /// Loads the current language from `SharedPreferences`.
+  ///
+  /// If no language is found in `SharedPreferences`, it defaults to the first language
+  /// in the `MyStrings.languages` list.
   void loadCurrentLanguage() async {
     _locale = Locale(
       sharedPreferences.getString(SharedPreferenceHelper.languageCode) ??
@@ -61,9 +70,9 @@ class LocalizationController extends GetxController {
     update();
   }
 
-  /// Saves the selected language to shared preferences.
+  /// Saves the selected language to `SharedPreferences`.
   ///
-  /// - [locale]: The locale to save.
+  /// - [locale]: The locale to be saved.
   void saveLanguage(Locale locale) async {
     sharedPreferences.setString(
       SharedPreferenceHelper.languageCode,
@@ -77,7 +86,7 @@ class LocalizationController extends GetxController {
 
   int _selectedIndex = 0;
 
-  /// The index of the selected language.
+  /// The index of the selected language in the language list.
   int get selectedIndex => _selectedIndex;
 
   /// Sets the index of the selected language.
@@ -89,6 +98,8 @@ class LocalizationController extends GetxController {
   }
 
   /// Searches for a language based on a query.
+  ///
+  /// Note: The current implementation is a placeholder and does not perform a real search.
   ///
   /// - [query]: The search query.
   void searchLanguage(String query) {

@@ -13,6 +13,9 @@ import 'package:verzusxyz/data/services/api_service.dart';
 /// using the `Get` library for dependency management. It also initializes
 /// `SharedPreferences` for local storage.
 ///
+/// This function is called at the start of the application to ensure that all
+/// required services are available for injection throughout the app.
+///
 /// - Returns a [Future] that completes with a map of language codes to language data.
 Future<Map<String, Map<String, String>>> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();

@@ -14,10 +14,23 @@ import '../../core/utils/url_container.dart';
 import '../../firebase_options.dart';
 import 'api_service.dart';
 
+/// A service class for handling Firebase Cloud Messaging (FCM) and local notifications.
+///
+/// This class is responsible for initializing Firebase, requesting notification permissions,
+/// handling incoming messages, and managing the FCM device token.
 class PushNotificationService {
-  ApiClient apiClient;
+  /// The API client for making HTTP requests.
+  final ApiClient apiClient;
+
+  /// Creates a new [PushNotificationService] instance.
+  ///
+  /// Requires an [ApiClient] instance to communicate with the backend.
   PushNotificationService({required this.apiClient});
 
+  /// Sets up the Firebase Cloud Messaging interactive message handling.
+  ///
+  /// This method initializes Firebase, requests notification permissions, and sets up
+  /// listeners for incoming messages.
   Future<void> setupInteractedMessage() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -44,7 +57,11 @@ class PushNotificationService {
     await registerNotificationListeners();
   }
 
-  registerNotificationListeners() async {
+  /// Registers notification listeners for handling incoming messages.
+  ///
+  /// This method sets up the Android notification channel and initializes the
+  /// local notifications plugin to display notifications while the app is in the foreground.
+  Future<void> registerNotificationListeners() async {
     AndroidNotificationChannel channel = androidNotificationChannel();
     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
         FlutterLocalNotificationsPlugin();
@@ -79,7 +96,7 @@ class PushNotificationService {
             );
             String? remark = payload['for_app'];
             if (remark != null && remark.isNotEmpty) {
-              //redirect any specific page
+              // Redirect to a specific page based on the payload
             }
           }
         } catch (e) {
@@ -137,25 +154,33 @@ class PushNotificationService {
     });
   }
 
-  enableIOSNotifications() async {
+  /// Enables foreground notification presentation options for iOS.
+  Future<void> enableIOSNotifications() async {
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
-          alert: true, // Required to display a heads up notification
+          alert: true,
           badge: true,
           sound: true,
         );
   }
 
-  androidNotificationChannel() => const AndroidNotificationChannel(
-    'high_importance_channel', // id
-    'High Importance Notifications', // title
-    description: 'This channel is used for important notifications.',
-    playSound: true,
-    enableVibration: true,
-    enableLights: true,
-    importance: Importance.high,
-  );
+  /// Creates an Android notification channel for high-importance notifications.
+  ///
+  /// - Returns an [AndroidNotificationChannel] instance.
+  AndroidNotificationChannel androidNotificationChannel() =>
+      const AndroidNotificationChannel(
+        'high_importance_channel',
+        'High Importance Notifications',
+        description: 'This channel is used for important notifications.',
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        importance: Importance.high,
+      );
 
+  /// Requests notification permissions from the user.
+  ///
+  /// This method requests permissions for iOS, macOS, and Android platforms.
   Future<void> _requestPermissions() async {
     final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
         FlutterLocalNotificationsPlugin();
@@ -181,7 +206,10 @@ class PushNotificationService {
     }
   }
 
-  // Function to save the image locally
+  /// Saves the notification image locally to the device.
+  ///
+  /// - [bytes]: The image data as a [Uint8List].
+  /// - Returns the local path of the saved image.
   Future<String> _saveImageLocally(Uint8List bytes) async {
     final directory = await getTemporaryDirectory();
     final imagePath = '${directory.path}/notification_image.png';
@@ -190,6 +218,12 @@ class PushNotificationService {
     return imagePath;
   }
 
+  /// Sends the user's FCM device token to the backend server.
+  ///
+  /// This method retrieves the current FCM token and sends it to the server.
+  /// It also handles token refresh events.
+  ///
+  /// - Returns `true` if the token was sent successfully, otherwise `false`.
   Future<bool> sendUserToken() async {
     String deviceToken;
     if (apiClient.sharedPreferences.containsKey(
@@ -226,6 +260,10 @@ class PushNotificationService {
     return success;
   }
 
+  /// Sends the updated FCM device token to the backend server.
+  ///
+  /// - [deviceToken]: The new FCM device token.
+  /// - Returns `true` if the token was sent successfully.
   Future<bool> sendUpdatedToken(String deviceToken) async {
     String url = '${UrlContainer.baseUrl}${UrlContainer.deviceTokenEndPoint}';
     Map<String, String> map = deviceTokenMap(deviceToken);
@@ -234,6 +272,10 @@ class PushNotificationService {
     return true;
   }
 
+  /// Creates a map containing the device token.
+  ///
+  /// - [deviceToken]: The FCM device token.
+  /// - Returns a map with the 'token' key.
   Map<String, String> deviceTokenMap(String deviceToken) {
     Map<String, String> map = {'token': deviceToken.toString()};
     return map;

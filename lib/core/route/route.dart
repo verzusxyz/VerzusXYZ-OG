@@ -42,7 +42,10 @@ import '../../view/screens/withdraw/add_withdraw_screen/add_withdraw_method_scre
 import '../../view/screens/withdraw/confirm_withdraw_screen/withdraw_confirm_screen.dart';
 import '../../view/screens/withdraw/withdraw_history/withdraw_screen.dart';
 
-/// A helper class for managing routes and navigation.
+/// A helper class for managing routes and navigation within the application.
+///
+/// This class defines all the route names as static constants and provides a list
+/// of `GetPage` objects for the GetX navigation system.
 class RouteHelper {
   /// The route for the splash screen.
   static const String splashScreen = "/splash_screen";

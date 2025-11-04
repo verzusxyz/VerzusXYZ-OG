@@ -1,0 +1,16 @@
+/// These rules are for a Firebase Storage bucket.
+///
+/// They are intentionally left open for this example, but in a production
+/// environment, you should secure your storage by restricting access to
+/// authenticated users and validating uploads.
+///
+/// For more information on Storage security rules, see the documentation:
+/// https://firebase.google.com/docs/storage/security/get-started
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

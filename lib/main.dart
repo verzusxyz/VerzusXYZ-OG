@@ -11,6 +11,10 @@ import 'package:verzusxyz/data/controller/localization/localization_controller.d
 import 'package:permission_handler/permission_handler.dart';
 import 'core/di_service/di_services.dart' as di_service;
 
+/// The main entry point of the application.
+///
+/// This function initializes the Flutter binding, requests necessary permissions,
+/// sets up dependency injection, initializes Firebase, and runs the application.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Permission.camera.request();
@@ -26,6 +30,10 @@ Future<void> main() async {
   runApp(MyApp(languages: languages));
 }
 
+/// A custom [HttpOverrides] class to bypass SSL certificate validation.
+///
+/// This is useful for development and testing purposes, but should be used with
+/// caution in production environments.
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
@@ -35,8 +43,17 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+/// The root widget of the application.
+///
+/// This widget sets up the `GetMaterialApp` and configures the initial route,
+/// navigation, and localization settings.
 class MyApp extends StatefulWidget {
+  /// The language data for the application.
   final Map<String, Map<String, String>> languages;
+
+  /// Creates a new [MyApp] instance.
+  ///
+  /// Requires a map of language data.
   const MyApp({Key? key, required this.languages}) : super(key: key);
 
   @override
