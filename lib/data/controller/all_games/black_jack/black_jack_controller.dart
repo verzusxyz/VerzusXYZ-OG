@@ -87,7 +87,6 @@ class BlackJackController extends GetxController {
       );
 
       if (gameId != null) {
-        // Mocking initial card deal
         userCards = ['AC', '10S'];
         dealerCards = ['7H', 'KD'];
         _calculateScores();
@@ -104,18 +103,15 @@ class BlackJackController extends GetxController {
   }
 
   Future<void> hit() async {
-    // Mocking a new card
     userCards.add('5D');
     _calculateScores();
     if (userScore > 21) {
-      // Bust
       await _endGame(false);
     }
     update();
   }
 
   Future<void> stay() async {
-    // Mocking dealer's turn
     while (dealerScore < 17) {
       dealerCards.add('3C');
       _calculateScores();
@@ -131,7 +127,6 @@ class BlackJackController extends GetxController {
     await blackJackRepo.endGame(gameId!, userWon, winnings, walletType);
     await loadGameInfo(); // Refresh balance
     playNow = false;
-    // Show a dialog or snackbar for win/loss
     Get.defaultDialog(
       title: userWon ? "You Won!" : "You Lost!",
       middleText: "Your new balance is $availableBalance",

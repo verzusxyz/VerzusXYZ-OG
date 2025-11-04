@@ -16,12 +16,7 @@ import 'package:verzusxyz/view/screens/auth/registration/widget/validation_widge
 import '../../../../components/app-bar/custom_appbar.dart';
 import '../../../../components/buttons/gradient_rounded_button.dart';
 
-/// A widget that displays the "Reset Password" screen.
-///
-/// This screen allows the user to enter a new password after verifying their
-/// email address.
 class ResetPasswordScreen extends StatefulWidget {
-  /// Creates a new [ResetPasswordScreen] instance.
   const ResetPasswordScreen({Key? key}) : super(key: key);
 
   @override
@@ -33,10 +28,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   void initState() {
-    super.initState();
     Get.put(ApiClient(sharedPreferences: Get.find()));
     Get.put(LoginRepo(apiClient: Get.find()));
     final controller = Get.put(ResetPasswordController(loginRepo: Get.find()));
+
+    super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       controller.email = Get.arguments[0];

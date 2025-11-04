@@ -1,67 +1,65 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MinesRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  MinesRepo({required this.apiClient});
-
-  Future<ResponseModel> invest(String invest, String minesNumber) async {
-    Map<String, dynamic> map = {
-      'invest': invest.toString(),
-      'mines': minesNumber,
-    };
-    String url = '${UrlContainer.baseUrl}${UrlContainer.minesInvest}';
-
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    print("this is invest ${res.responseJson}");
-    return res;
+  Future<String?> createNewGame({
+    required double investAmount,
+    required String walletType,
+    required String userChoice,
+  }) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final docRef = await _firestore.collection('gameLogs').add({
+          'userId': user.uid,
+          'gameType': 'mines',
+          'investAmount': investAmount,
+          'walletType': walletType,
+          'userChoice': userChoice,
+          'status': 'in-progress',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return docRef.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error creating new game: $e');
+      return null;
+    }
   }
 
-  Future<ResponseModel> cashOut(String gameId) async {
-    Map<String, dynamic> map = {'game_id': gameId};
-    String url = '${UrlContainer.baseUrl}${UrlContainer.minesCashOut}';
+  Future<void> endGame(
+    String gameId,
+    bool userWon,
+    double winnings,
+    String walletType,
+  ) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final userRef = _firestore.collection('users').doc(user.uid);
+        final gameLogRef = _firestore.collection('gameLogs').doc(gameId);
 
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    print("this is cashOut ${res.responseJson}");
-    return res;
-  }
+        await _firestore.runTransaction((transaction) async {
+          final userDoc = await transaction.get(userRef);
+          final balanceField =
+              walletType == 'live' ? 'liveBalance' : 'demoBalance';
+          final currentBalance = userDoc[balanceField] ?? 0;
 
-  Future<ResponseModel> minesEnd(String gameId) async {
-    Map<String, dynamic> map = {'game_id': gameId};
-    String url = '${UrlContainer.baseUrl}${UrlContainer.minesEnd}';
-
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    print("this is minesEnd ${res.responseJson}");
-    return res;
-  }
-
-  Future<dynamic> loadData() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.minesdata}';
-
-    final response = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return response;
+          transaction
+              .update(userRef, {balanceField: currentBalance + winnings});
+          transaction.update(gameLogRef, {
+            'status': 'completed',
+            'winStatus': userWon ? 'win' : 'lose',
+            'winnings': winnings,
+          });
+        });
+      }
+    } catch (e) {
+      print('Error ending game: $e');
+    }
   }
 }

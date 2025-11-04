@@ -88,7 +88,6 @@ class RouletteController extends GetxController {
       );
 
       if (gameId != null) {
-        // Mocking the game result
         adminSelectedNum = Random().nextInt(37);
         final bool userWon = selectedNumbers.contains(adminSelectedNum);
         await endTheGame(userWon);
@@ -108,7 +107,6 @@ class RouletteController extends GetxController {
     final double winnings = userWon ? (amount * (36 / selectedNumbers.length)) - amount : -amount;
     await rouletteRepo.endGame(gameId!, userWon, winnings, walletType);
     await loadGameInfo(); // Refresh balance
-    // Show a dialog or snackbar for win/loss
     Get.defaultDialog(
       title: userWon ? "You Won!" : "You Lost!",
       middleText:

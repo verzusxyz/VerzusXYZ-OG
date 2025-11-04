@@ -4,6 +4,7 @@ import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_strings.dart';
 import 'package:verzusxyz/data/controller/all_games/head-tail/head_tail_controller.dart';
 import 'package:verzusxyz/data/repo/all-games/head-tail/head_tail_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_button.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_loading_button.dart';
 import 'package:verzusxyz/view/components/card/game_top_section.dart';
@@ -26,13 +27,20 @@ class HeadTailScreen extends StatefulWidget {
 class _HeadTailScreenState extends State<HeadTailScreen> {
   @override
   void initState() {
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(HeadTailRepo(apiClient: Get.find()));
+    final controller = Get.put(HeadTailController(headTailRepo: Get.find()));
     super.initState();
-    final walletType = Get.arguments as String;
-    Get.put(HeadTailRepo());
-    Get.put(HeadTailController(
-      headTailRepo: Get.find(),
-      walletType: walletType,
-    ));
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      controller.loadData();
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    Get.find<HeadTailController>().closeAll();
   }
 
   @override
@@ -60,8 +68,8 @@ class _HeadTailScreenState extends State<HeadTailScreen> {
                         ),
                         const SizedBox(height: Dimensions.space5),
                         AvailableBalanceCard(
-                          curSymbol: '\$', // Assuming USD for now
-                          balance: controller.availableBalance,
+                          curSymbol: controller.defaultCurrencySymbol,
+                          balance: controller.availableBalance.toString(),
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -89,7 +97,7 @@ class _HeadTailScreenState extends State<HeadTailScreen> {
                           onChanged: (value) {},
                           focusNode: controller.amountFocusNode,
                           textInputType: TextInputType.number,
-                          currrency: 'USD', // Assuming USD for now
+                          currrency: controller.defaultCurrency,
                           inputAction: TextInputAction.next,
                           validator: (value) {
                             if (value!.isEmpty) {
@@ -101,11 +109,13 @@ class _HeadTailScreenState extends State<HeadTailScreen> {
                         ),
                         const SizedBox(height: Dimensions.space10),
                         MinimumMaximumBonusSection(
-                          haswinAmount: controller.winningPercentage != "0",
+                          haswinAmount: controller.winningPercentage != "0"
+                              ? true
+                              : false,
                           maximum: controller.maximum,
                           minimum: controller.minimum,
                           winAmount: controller.winningPercentage,
-                          currencySym: '\$', // Assuming USD for now
+                          currencySym: controller.defaultCurrency,
                         ),
                         const SizedBox(height: Dimensions.space10),
                         const OptionSelectionSection(),
@@ -124,8 +134,19 @@ class _HeadTailScreenState extends State<HeadTailScreen> {
                                 text: MyStrings.playNow,
                                 press: () {
                                   if (controller
-                                      .amountController.text.isNotEmpty) {
-                                    controller.submitInvestmentRequest();
+                                      .amountController
+                                      .text
+                                      .isNotEmpty) {
+                                    if (controller.isUserChoiseIsTail == true ||
+                                        controller.isUserChoiseIsHead == true) {
+                                      controller.submitInvestmentRequest();
+                                    } else {
+                                      CustomSnackBar.error(
+                                        errorList: [
+                                          MyStrings.theChooseFieldisRequired,
+                                        ],
+                                      );
+                                    }
                                   } else {
                                     CustomSnackBar.error(
                                       errorList: [

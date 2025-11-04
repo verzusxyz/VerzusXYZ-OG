@@ -1,16 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// A repository class for handling Blackjack game logic with Firebase.
 class BlackJackRepo {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Creates a new Blackjack game document in Firestore.
-  ///
-  /// - [investAmount]: The amount the user is betting.
-  /// - [walletType]: The wallet to use ('live' or 'demo').
-  /// - Returns the ID of the new game document.
   Future<String?> createNewGame({
     required double investAmount,
     required String walletType,
@@ -18,17 +12,6 @@ class BlackJackRepo {
     try {
       final User? user = _auth.currentUser;
       if (user != null) {
-        // Deduct the amount from the user's balance
-        final userRef = _firestore.collection('users').doc(user.uid);
-        await _firestore.runTransaction((transaction) async {
-          final userDoc = await transaction.get(userRef);
-          final balanceField =
-              walletType == 'live' ? 'liveBalance' : 'demoBalance';
-          final currentBalance = userDoc[balanceField] ?? 0;
-          transaction
-              .update(userRef, {balanceField: currentBalance - investAmount});
-        });
-
         final docRef = await _firestore.collection('gameLogs').add({
           'userId': user.uid,
           'gameType': 'blackjack',
@@ -46,12 +29,6 @@ class BlackJackRepo {
     }
   }
 
-  /// Ends the game and updates the user's balance.
-  ///
-  /// - [gameId]: The ID of the game log document.
-  /// - [userWon]: Whether the user won the game.
-  /// - [winnings]: The amount the user won or lost.
-  /// - [walletType]: The wallet to update.
   Future<void> endGame(
     String gameId,
     bool userWon,

@@ -1,9 +1,13 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:verzusxyz/core/utils/dimensions.dart';
+import 'package:verzusxyz/core/utils/my_audio.dart';
 import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_strings.dart';
+import 'package:verzusxyz/core/utils/style.dart';
 import 'package:verzusxyz/data/controller/all_games/rock_paper_scissors_controller.dart';
 import 'package:verzusxyz/data/repo/all-games/rock_paper_scissors/rock_paper_scissors_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_button.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_loading_button.dart';
 import 'package:verzusxyz/view/components/card/game_top_section.dart';
@@ -26,13 +30,17 @@ class RockPaperScissorsScreen extends StatefulWidget {
 class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
   @override
   void initState() {
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(RockPaperScissorsRepo(apiClient: Get.find()));
+    final controller = Get.put(
+      RockPaperScissorsController(rockPaperScissorsRepo: Get.find()),
+    );
     super.initState();
-    final walletType = Get.arguments as String;
-    Get.put(RockPaperScissorsRepo());
-    Get.put(RockPaperScissorsController(
-      rockPaperScissorsRepo: Get.find(),
-      walletType: walletType,
-    ));
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      controller.initData();
+      controller.startUpdatingImage();
+    });
   }
 
   @override
@@ -61,7 +69,7 @@ class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
                         const SizedBox(height: Dimensions.space5),
                         AvailableBalanceCard(
                           balance: controller.availableBalance,
-                          curSymbol: '\$', // Assuming USD
+                          curSymbol: controller.defaultCurrencySymbol,
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -75,8 +83,45 @@ class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
                           ),
                           padding: const EdgeInsets.all(Dimensions.space10),
                           width: double.infinity,
-                          child:
-                              Text('Result will be shown here...'), // Placeholder
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  controller.currentImage,
+                                  height: Dimensions.space160,
+                                  fit: BoxFit.cover,
+                                ),
+                                Visibility(
+                                  visible: controller.showResult,
+                                  child: Text(
+                                    MyStrings.versus.tr,
+                                    style: semiBoldMediumLarge.copyWith(
+                                      color: MyColor.colorWhite,
+                                    ),
+                                  ),
+                                ),
+                                Visibility(
+                                  visible: controller.showResult,
+                                  child: Image.asset(
+                                    controller.rockScissorPaperImages[controller
+                                                .userChoice ==
+                                            Choice.rock
+                                        ? 0
+                                        : controller.userChoice == Choice.paper
+                                        ? 1
+                                        : controller.userChoice ==
+                                              Choice.scissors
+                                        ? 2
+                                        : 0],
+                                    height: Dimensions.space160,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(height: Dimensions.space15),
                         CustomTextField(
@@ -90,7 +135,7 @@ class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
                           labelText: MyStrings.enterAmount.tr,
                           labelTextColor: MyColor.subTitleTextColor,
                           isSuffixContainer: true,
-                          currrency: 'USD',
+                          currrency: controller.defaultCurrency,
                           onChanged: (value) {},
                           textInputType: TextInputType.number,
                           inputAction: TextInputAction.next,
@@ -108,37 +153,57 @@ class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
                           maximum: controller.maximum,
                           minimum: controller.minimum,
                           winAmount: controller.winningPercentage,
-                          currencySym: '\$',
+                          currencySym: controller.defaultCurrency,
                         ),
                         const SizedBox(height: Dimensions.space10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            OptionSelectionContainer(
-                              isSelected: controller.userChoice == Choice.rock,
-                              images:
-                                  'assets/images/games/rock.png', // Placeholder
-                              onTap: () => controller.setUserChoice(Choice.rock),
+                        Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: Dimensions.space10,
+                          ),
+                          padding: const EdgeInsets.all(Dimensions.space6),
+                          decoration: BoxDecoration(
+                            color: MyColor.secondaryPrimaryColor,
+                            borderRadius: BorderRadius.circular(
+                              Dimensions.space8,
                             ),
-                            OptionSelectionContainer(
-                              isSelected: controller.userChoice == Choice.paper,
-                              images:
-                                  'assets/images/games/paper.png', // Placeholder
-                              onTap: () =>
-                                  controller.setUserChoice(Choice.paper),
-                            ),
-                            OptionSelectionContainer(
-                              isSelected:
-                                  controller.userChoice == Choice.scissors,
-                              images:
-                                  'assets/images/games/scissors.png', // Placeholder
-                              onTap: () =>
-                                  controller.setUserChoice(Choice.scissors),
-                            ),
-                          ],
+                          ),
+                          child: GridView.builder(
+                            padding: EdgeInsets.zero,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                ),
+                            shrinkWrap: true,
+                            itemCount: controller.rockScissorPaperImages.length,
+                            itemBuilder: (context, index) {
+                              return OptionSelectionContainer(
+                                isSelected:
+                                    controller.userChoice != null &&
+                                    controller.userChoice!.index == index,
+                                images:
+                                    controller.rockScissorPaperImages[index],
+                                onTap: () {
+                                  AudioPlayer().play(
+                                    AssetSource(MyAudio.clickAudio),
+                                  );
+                                  controller.amountFocusNode.unfocus();
+                                  if (index == 0) {
+                                    controller.setUserChoice(Choice.rock);
+                                  }
+                                  if (index == 1) {
+                                    controller.setUserChoice(Choice.paper);
+                                  }
+                                  if (index == 2) {
+                                    controller.setUserChoice(Choice.scissors);
+                                  }
+                                },
+                              );
+                            },
+                          ),
                         ),
                         const SizedBox(height: Dimensions.space14),
-                        controller.isSubmitted
+                        controller.isSubmitting
                             ? const RoundedLoadingBtn(
                                 color: MyColor.primaryButtonColor,
                               )
@@ -152,8 +217,16 @@ class _RockPaperScissorsScreenState extends State<RockPaperScissorsScreen> {
                                 text: MyStrings.playNow,
                                 press: () {
                                   if (controller
-                                      .amountController.text.isNotEmpty) {
-                                    controller.submitInvestmentRequest();
+                                      .amountController
+                                      .text
+                                      .isNotEmpty) {
+                                    if (controller.userChoice != null) {
+                                      controller.submitInvestmentRequest();
+                                    } else {
+                                      CustomSnackBar.error(
+                                        errorList: [MyStrings.selectYourChoice],
+                                      );
+                                    }
                                   } else {
                                     CustomSnackBar.error(
                                       errorList: [

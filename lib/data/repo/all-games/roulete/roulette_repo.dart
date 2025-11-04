@@ -1,17 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// A repository class for handling Roulette game logic with Firebase.
 class RouletteRepo {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Creates a new Roulette game document in Firestore.
-  ///
-  /// - [investAmount]: The amount the user is betting.
-  /// - [walletType]: The wallet to use ('live' or 'demo').
-  /// - [userChoice]: The user's choice.
-  /// - Returns the ID of the new game document.
   Future<String?> createNewGame({
     required double investAmount,
     required String walletType,
@@ -38,12 +31,6 @@ class RouletteRepo {
     }
   }
 
-  /// Ends the game and updates the user's balance.
-  ///
-  /// - [gameId]: The ID of the game log document.
-  /// - [userWon]: Whether the user won the game.
-  /// - [winnings]: The amount the user won or lost.
-  /// - [walletType]: The wallet to update.
   Future<void> endGame(
     String gameId,
     bool userWon,

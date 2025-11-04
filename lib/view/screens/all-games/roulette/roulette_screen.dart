@@ -1,17 +1,20 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:verzusxyz/core/utils/dimensions.dart';
+import 'package:verzusxyz/core/utils/my_audio.dart';
 import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/data/controller/all_games/roulette/roulette_controller.dart';
+import 'package:verzusxyz/data/controller/all_games/roulette/roulette_controller_.dart';
 import 'package:verzusxyz/data/repo/all-games/roulete/roulette_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_button.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_loading_button.dart';
 import 'package:verzusxyz/view/components/card/game_top_section.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 import 'package:verzusxyz/view/components/text-form-field/custom_text_field.dart';
 import 'package:verzusxyz/view/screens/all-games/head_tail/widgets/available_balance_card.dart';
-import 'packagepackage:verzusxyz/view/screens/all-games/roulette/widget/custom_wheel.dart';
+import 'package:verzusxyz/view/screens/all-games/roulette/widget/custom_wheel.dart';
 import 'package:verzusxyz/view/screens/all-games/widgets/bet_board.dart';
 import 'package:verzusxyz/view/screens/all-games/widgets/minimum_maximum_bonus_section.dart';
 import 'package:get/get.dart';
@@ -26,17 +29,16 @@ class RouletteScreen extends StatefulWidget {
 class _RouletteScreenState extends State<RouletteScreen> {
   @override
   void initState() {
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(RouletteRepo(apiClient: Get.find()));
+    final controller = Get.put(RouletteControllers(rouletteRepo: Get.find()));
     super.initState();
-    final walletType = Get.arguments as String;
-    Get.put(RouletteRepo());
-    Get.put(RouletteController(
-      rouletteRepo: Get.find(),
-      walletType: walletType,
-    ));
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    controller.getSpinData();
+    controller.loadGameInfo();
   }
 
   @override
@@ -51,7 +53,7 @@ class _RouletteScreenState extends State<RouletteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GetBuilder<RouletteController>(
+      body: GetBuilder<RouletteControllers>(
         builder: (controller) => Container(
           height: double.infinity,
           decoration: const BoxDecoration(gradient: MyColor.gradientBackground),
@@ -66,13 +68,13 @@ class _RouletteScreenState extends State<RouletteScreen> {
                 children: [
                   const SizedBox(height: Dimensions.space70),
                   GameTopSection(
-                    name: controller.name,
+                    name: controller.gameName,
                     instruction: controller.instruction,
                   ),
                   const SizedBox(height: Dimensions.space5),
                   AvailableBalanceCard(
-                    balance: controller.availableBalance,
-                    curSymbol: '\$',
+                    balance: controller.availAbleBalance,
+                    curSymbol: controller.currencySym,
                   ),
                   Container(
                     decoration: BoxDecoration(
@@ -101,8 +103,10 @@ class _RouletteScreenState extends State<RouletteScreen> {
                     labelText: MyStrings.enterAmount.tr,
                     labelTextColor: MyColor.subTitleTextColor,
                     isSuffixContainer: true,
-                    onChanged: (value) {},
-                    currrency: 'USD',
+                    onChanged: (value) {
+                      controller.countWinningAmount();
+                    },
+                    currrency: controller.defaultCurrency,
                     textInputType: TextInputType.number,
                     inputAction: TextInputAction.next,
                     validator: (value) {
@@ -116,12 +120,12 @@ class _RouletteScreenState extends State<RouletteScreen> {
                   const SizedBox(height: Dimensions.space10),
                   MinimumMaximumBonusSection(
                     haswinAmount: false,
-                    hasBonusAmount: controller.selectedNumbers.isNotEmpty,
-                    maximum: controller.maximum,
-                    minimum: controller.minimum,
+                    hasBonusAmount: controller.isBetValueSelected,
+                    maximum: controller.maxAoumnnt,
+                    minimum: controller.minimumAoumnnt,
                     winAmount: controller.winningPercentage,
-                    currencySym: '\$',
-                    bonusAmount: '0', // Placeholder
+                    currencySym: controller.defaultCurrency,
+                    bonusAmount: controller.winningAmount.toString(),
                   ),
                   const SizedBox(height: Dimensions.space10),
                   Container(
@@ -154,8 +158,19 @@ class _RouletteScreenState extends State<RouletteScreen> {
                           color: MyColor.primaryButtonColor,
                           text: MyStrings.playNow,
                           press: () {
+                            controller.gameStatus = "ongoing";
                             if (controller.amountController.text.isNotEmpty) {
-                              controller.submitInvestmentRequest();
+                              if (controller.selectedNumbers.isNotEmpty) {
+                                AudioPlayer().play(
+                                  AssetSource(MyAudio.clickAudio),
+                                );
+                                controller.submitInvestmentRequest();
+                                controller.play();
+                              } else {
+                                CustomSnackBar.error(
+                                  errorList: [MyStrings.chooseFieldidRequired],
+                                );
+                              }
                             } else {
                               CustomSnackBar.error(
                                 errorList: [MyStrings.enterInvestmentAmount],
