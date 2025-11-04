@@ -13,12 +13,7 @@ import 'package:verzusxyz/view/components/text/default_text.dart';
 
 import '../../../../components/buttons/gradient_rounded_button.dart';
 
-/// A widget that displays the "Forgot Password" screen.
-///
-/// This screen allows the user to enter their email or username to receive a
-/// password reset code.
 class ForgetPasswordScreen extends StatefulWidget {
-  /// Creates a new [ForgetPasswordScreen] instance.
   const ForgetPasswordScreen({Key? key}) : super(key: key);
 
   @override
@@ -30,10 +25,11 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
 
   @override
   void initState() {
-    super.initState();
     Get.put(ApiClient(sharedPreferences: Get.find()));
     Get.put(LoginRepo(apiClient: Get.find()));
     Get.put(ForgetPasswordController(loginRepo: Get.find()));
+
+    super.initState();
   }
 
   @override

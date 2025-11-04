@@ -7,7 +7,6 @@ import 'package:verzusxyz/core/utils/my_strings.dart';
 import 'package:verzusxyz/core/utils/style.dart';
 import 'package:verzusxyz/core/utils/url_container.dart';
 import 'package:verzusxyz/data/controller/home/home_controller.dart';
-import 'package:verzusxyz/view/components/dialog/wallet_selection_dialog.dart';
 import 'package:verzusxyz/view/components/image/custom_network_image.dart';
 import 'package:verzusxyz/view/components/text-form-field/no_data_tile.dart';
 import 'package:get/get.dart';
@@ -20,21 +19,6 @@ class AllGamesSection extends StatefulWidget {
 }
 
 class _AllGamesSectionState extends State<AllGamesSection> {
-  void _showWalletSelectionDialog(String route) {
-    Get.dialog(
-      WalletSelectionDialog(
-        onLiveWallet: () {
-          Get.back();
-          Get.toNamed(route, arguments: 'live');
-        },
-        onDemoWallet: () {
-          Get.back();
-          Get.toNamed(route, arguments: 'demo');
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeController>(
@@ -86,56 +70,46 @@ class _AllGamesSectionState extends State<AllGamesSection> {
                       highlightColor: Colors.transparent,
                       onTap: () {
                         if (alias == "head_tail") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.headAndTailScreen);
+                          Get.toNamed(RouteHelper.headAndTailScreen);
                         }
                         if (alias == "rock_paper_scissors") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.rockPaperScissorsScreen);
+                          Get.toNamed(RouteHelper.rockPaperScissorsScreen);
                         }
                         if (alias == "roulette") {
-                          _showWalletSelectionDialog(RouteHelper.rouletteScreen);
+                          Get.toNamed(RouteHelper.rouletteScreen);
                         }
                         if (alias == "number_guess") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.guessTheNumberScreen);
+                          Get.toNamed(RouteHelper.guessTheNumberScreen);
                         }
                         if (alias == "dice_rolling") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.diceRollingScreen);
+                          Get.toNamed(RouteHelper.diceRollingScreen);
                         }
                         if (alias == "spin_wheel") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.spinWheelScreen);
+                          Get.toNamed(RouteHelper.spinWheelScreen);
                         }
                         if (alias == "card_finding") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.cardFindingScreen);
+                          Get.toNamed(RouteHelper.cardFindingScreen);
                         }
                         if (alias == "number_slot") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.numberSlotScreen);
+                          Get.toNamed(RouteHelper.numberSlotScreen);
                         }
                         if (alias == "number_pool") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.poolNumberScreen);
+                          Get.toNamed(RouteHelper.poolNumberScreen);
                         }
                         if (alias == "casino_dice") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.playCasinoDiceScreen);
+                          Get.toNamed(RouteHelper.playCasinoDiceScreen);
                         }
                         if (alias == "keno") {
-                          _showWalletSelectionDialog(RouteHelper.kenoScreen);
+                          Get.toNamed(RouteHelper.kenoScreen);
                         }
                         if (alias == "blackjack") {
-                          _showWalletSelectionDialog(
-                              RouteHelper.blackJackScreen);
+                          Get.toNamed(RouteHelper.blackJackScreen);
                         }
                         if (alias == "poker") {
-                          _showWalletSelectionDialog(RouteHelper.pokerScreen);
+                          Get.toNamed(RouteHelper.pokerScreen);
                         }
                         if (alias == "mines") {
-                          _showWalletSelectionDialog(RouteHelper.minesScreen);
+                          Get.toNamed(RouteHelper.minesScreen);
                         }
                       },
                       child: Container(
@@ -168,7 +142,9 @@ class _AllGamesSectionState extends State<AllGamesSection> {
                                     controller.gamesList[index].image,
                                   ),
                                   imageUrl:
-                                      '${UrlContainer.dashboardImage}${controller.gamesList[index].image}',
+                                      UrlContainer.dashboardImage +
+                                      controller.gamesList[index].image
+                                          .toString(),
                                   width: 200,
                                   height: 200,
                                   loaderColor: MyColor.activeIndicatorColor,

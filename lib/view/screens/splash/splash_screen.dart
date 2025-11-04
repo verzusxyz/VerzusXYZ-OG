@@ -5,15 +5,10 @@ import 'package:verzusxyz/core/utils/my_images.dart';
 import 'package:verzusxyz/core/utils/util.dart';
 import 'package:verzusxyz/data/controller/localization/localization_controller.dart';
 import 'package:verzusxyz/data/controller/splash/splash_controller.dart';
-import 'package:verzusxyz/data/repo/splash/splash_repo.dart';
+import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 
-/// A widget that displays the splash screen of the application.
-///
-/// This widget is the first screen that the user sees when they open the app.
-/// It is responsible for initializing the necessary controllers and services
-/// and then navigating to the next screen.
 class SplashScreen extends StatefulWidget {
-  /// Creates a new [SplashScreen] instance.
   const SplashScreen({Key? key}) : super(key: key);
 
   @override
@@ -23,13 +18,15 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
-    super.initState();
     MyUtils.splashScreen();
-    Get.put(SplashRepo());
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(GeneralSettingRepo(apiClient: Get.find()));
     Get.put(LocalizationController(sharedPreferences: Get.find()));
     final controller = Get.put(
       SplashController(repo: Get.find(), localizationController: Get.find()),
     );
+
+    super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       controller.gotoNextPage();

@@ -1,54 +1,65 @@
-import 'dart:convert';
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class KenoRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  KenoRepo({required this.apiClient});
+  Future<String?> createNewGame({
+    required double investAmount,
+    required String walletType,
+    required String userChoice,
+  }) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final docRef = await _firestore.collection('gameLogs').add({
+          'userId': user.uid,
+          'gameType': 'keno',
+          'investAmount': investAmount,
+          'walletType': walletType,
+          'userChoice': userChoice,
+          'status': 'in-progress',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return docRef.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error creating new game: $e');
+      return null;
+    }
+  }
 
-  Future<ResponseModel> submitAnswer(
-    String invest,
-    List<String> selectedNumbers,
+  Future<void> endGame(
+    String gameId,
+    bool userWon,
+    double winnings,
+    String walletType,
   ) async {
-    Map<String, dynamic> map = {
-      'invest': invest.toString(),
-      'choose': jsonEncode(selectedNumbers),
-    };
-    String url = '${UrlContainer.baseUrl}${UrlContainer.kenoSubmitAnswer}';
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final userRef = _firestore.collection('users').doc(user.uid);
+        final gameLogRef = _firestore.collection('gameLogs').doc(gameId);
 
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    return res;
-  }
+        await _firestore.runTransaction((transaction) async {
+          final userDoc = await transaction.get(userRef);
+          final balanceField =
+              walletType == 'live' ? 'liveBalance' : 'demoBalance';
+          final currentBalance = userDoc[balanceField] ?? 0;
 
-  Future<ResponseModel> getAnswer(String gameID) async {
-    Map<String, String> map = {'gameLog_id': gameID.toString()};
-    String url = '${UrlContainer.baseUrl}${UrlContainer.kenoResult}';
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-    return res;
-  }
-
-  Future<dynamic> loadData() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.kenodata}';
-
-    final response = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return response;
+          transaction
+              .update(userRef, {balanceField: currentBalance + winnings});
+          transaction.update(gameLogRef, {
+            'status': 'completed',
+            'winStatus': userWon ? 'win' : 'lose',
+            'winnings': winnings,
+          });
+        });
+      }
+    } catch (e) {
+      print('Error ending game: $e');
+    }
   }
 }

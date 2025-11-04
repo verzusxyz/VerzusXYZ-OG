@@ -5,15 +5,12 @@ import 'package:verzusxyz/core/route/route.dart';
 import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_images.dart';
 import 'package:verzusxyz/data/controller/auth/auth/registration_controller.dart';
+import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
 import 'package:verzusxyz/data/repo/auth/signup_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/will_pop_widget.dart';
 
-/// A widget that displays the registration screen of the application.
-///
-/// This widget is responsible for initializing the `RegistrationController` and
-/// displaying the registration form.
 class RegistrationScreen extends StatefulWidget {
-  /// Creates a new [RegistrationScreen] instance.
   const RegistrationScreen({Key? key}) : super(key: key);
 
   @override
@@ -23,13 +20,20 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   void initState() {
-    super.initState();
-    Get.put(RegistrationRepo());
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(GeneralSettingRepo(apiClient: Get.find()));
+    Get.put(RegistrationRepo(apiClient: Get.find()));
     Get.put(
       RegistrationController(
         registrationRepo: Get.find(),
+        generalSettingRepo: Get.find(),
       ),
     );
+
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<RegistrationController>().initData();
+    });
   }
 
   @override

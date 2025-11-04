@@ -1,134 +1,55 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
-import 'package:verzusxyz/core/helper/date_converter.dart';
 import 'package:get/get.dart';
-import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/data/model/authorization/authorization_response_model.dart';
 import 'package:verzusxyz/data/model/kyc/kyc_response_model.dart';
 import 'package:verzusxyz/data/repo/kyc/kyc_repo.dart';
-import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
+import 'package:image_picker/image_picker.dart';
 
 class KycController extends GetxController {
-  KycRepo repo;
+  final KycRepo repo;
   KycController({required this.repo});
-  File? imageFile;
 
   bool isLoading = true;
-  List<KycFormModel> formList = [];
-  String selectOne = MyStrings.selectOne;
-
-  KycResponseModel model = KycResponseModel();
-  bool isNoDataFound = false;
   bool isAlreadyVerified = false;
   bool isAlreadyPending = false;
+  bool isNoDataFound = false;
+  bool submitLoading = false;
 
-  beforeInitLoadKycData() async {
-    setStatusTrue();
+  List<KycFormModel> formList = [];
 
-    try {
-      model = await repo.getKycData();
-
-      if (model.data != null &&
-          model.status?.toLowerCase() == MyStrings.success.toLowerCase()) {
-        List<KycFormModel>? tList = model.data?.form?.list;
-
-        if (tList != null && tList.isNotEmpty) {
-          formList.clear();
-          for (var element in tList) {
-            if (element.type == 'select') {
-              bool? isEmpty = element.options?.isEmpty;
-              bool empty = isEmpty ?? true;
-              if (element.options != null && empty != true) {
-                element.options?.insert(0, selectOne);
-                element.selectedValue = element.options?.first;
-                formList.add(element);
-              }
-            } else {
-              formList.add(element);
-            }
-          }
-        }
-
-        isNoDataFound = false;
-      } else {
-        if (model.remark?.toLowerCase() == 'already_verified') {
-          isAlreadyVerified = true;
-        } else if (model.remark?.toLowerCase() == 'under_review') {
-          isAlreadyPending = true;
-        } else {
-          isNoDataFound = true;
-        }
-      }
-    } finally {
-      setStatusFalse();
-    }
-    setStatusFalse();
-  }
-
-  setStatusTrue() {
+  Future<void> beforeInitLoadKycData() async {
     isLoading = true;
     update();
-  }
+    KycResponseModel response = await repo.getKycData();
+    if (response.status == 'success') {
+      final kycData = response.data;
+      if (kycData?['status'] == 'verified') {
+        isAlreadyVerified = true;
+      } else if (kycData?['status'] == 'pending') {
+        isAlreadyPending = true;
+      } else {
+        // Build the form from a predefined structure or settings
+        // For simplicity, we'll create a dummy form here
+        formList = [
+          KycFormModel(
+              name: 'Full Name',
+              label: 'fullName',
+              type: 'text',
+              isRequired: 'required'),
+          KycFormModel(
+              name: 'Photo ID',
+              label: 'photoId',
+              type: 'file',
+              isRequired: 'required'),
+        ];
+      }
+    } else {
+      isNoDataFound = true;
+    }
 
-  setStatusFalse() {
     isLoading = false;
     update();
-  }
-
-  bool submitLoading = false;
-  submitKycData() async {
-    List<String> list = hasError();
-
-    if (list.isNotEmpty) {
-      CustomSnackBar.error(errorList: list);
-      return;
-    }
-
-    submitLoading = true;
-    update();
-
-    AuthorizationResponseModel response = await repo.submitKycData(formList);
-
-    if (response.status?.toLowerCase() == MyStrings.success.toLowerCase()) {
-      isAlreadyPending = true;
-      CustomSnackBar.success(
-        successList: response.message?.success ?? [MyStrings.success.tr],
-      );
-    } else {
-      CustomSnackBar.error(
-        errorList: response.message?.error ?? [MyStrings.requestFail.tr],
-      );
-    }
-
-    submitLoading = false;
-    update();
-  }
-
-  List<String> hasError() {
-    List<String> errorList = [];
-    errorList.clear();
-
-    for (var element in formList) {
-      if (element.isRequired == 'required') {
-        if (element.type == 'checkbox') {
-          if (element.cbSelected == null) {
-            errorList.add('${element.name} ${MyStrings.isRequired}');
-          }
-        } else if (element.type == 'file') {
-          if (element.imageFile == null) {
-            errorList.add('${element.name} ${MyStrings.isRequired}');
-          }
-        } else {
-          if (element.selectedValue == '' ||
-              element.selectedValue == selectOne) {
-            errorList.add('${element.name} ${MyStrings.isRequired}');
-          }
-        }
-      }
-    }
-
-    return errorList;
   }
 
   void changeSelectedValue(value, int index) {
@@ -136,172 +57,87 @@ class KycController extends GetxController {
     update();
   }
 
-  //NEW DATE TIME
-  void changeSelectedDateTimeValue(int index, BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (pickedDate != null) {
-      TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-      if (pickedTime != null) {
-        final DateTime selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        formList[index].selectedValue = DateConverter.estimatedDateTime(
-          selectedDateTime,
-        );
-        // formList[index].selectedValue = selectedDateTime.toIso8601String();
-        formList[index].textEditingController?.text =
-            DateConverter.estimatedDateTime(selectedDateTime);
-        print(formList[index].textEditingController?.text);
-        print(formList[index].selectedValue);
-        update();
-      }
-    }
-
-    update();
-  }
-
-  void changeSelectedDateOnlyValue(int index, BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (pickedDate != null) {
-      final DateTime selectedDateTime = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-      );
-
-      formList[index].selectedValue = DateConverter.estimatedDate(
-        selectedDateTime,
-      );
-      formList[index].textEditingController?.text = DateConverter.estimatedDate(
-        selectedDateTime,
-      );
-      print(formList[index].textEditingController?.text);
-      print(formList[index].selectedValue);
-      update();
-    }
-
-    update();
-  }
-
-  void changeSelectedTimeOnlyValue(int index, BuildContext context) async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (pickedTime != null) {
-      final DateTime selectedDateTime = DateTime(
-        DateTime.now().year,
-        DateTime.now().month,
-        DateTime.now().day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-
-      formList[index].selectedValue = DateConverter.estimatedTime(
-        selectedDateTime,
-      );
-      formList[index].textEditingController?.text = DateConverter.estimatedTime(
-        selectedDateTime,
-      );
-      print(formList[index].textEditingController?.text);
-      print(formList[index].selectedValue);
-      update();
-    }
-
-    update();
-  }
-
-  //End DATE TIME
   void changeSelectedRadioBtnValue(int listIndex, int selectedIndex) {
     formList[listIndex].selectedValue =
         formList[listIndex].options?[selectedIndex];
     update();
   }
 
-  void changeSelectedCheckBoxValue(int listIndex, String value) {
-    List<String> list = value.split('_');
-    int index = int.parse(list[0]);
-    bool status = list[1] == 'true' ? true : false;
+  void changeSelectedCheckBoxValue(int listIndex, dynamic value) {
+    if (formList[listIndex].cbSelected == null) {
+      formList[listIndex].cbSelected = [];
+    }
 
-    List<String>? selectedValue = formList[listIndex].cbSelected;
-
-    if (selectedValue != null) {
-      String? value = formList[listIndex].options?[index];
-      if (status) {
-        if (!selectedValue.contains(value)) {
-          selectedValue.add(value!);
-          formList[listIndex].cbSelected = selectedValue;
-          update();
-        }
-      } else {
-        if (selectedValue.contains(value)) {
-          selectedValue.removeWhere((element) => element == value);
-          formList[listIndex].cbSelected = selectedValue;
-          update();
-        }
-      }
+    if (formList[listIndex].cbSelected!.contains(value)) {
+      formList[listIndex].cbSelected!.remove(value);
     } else {
-      selectedValue = [];
-      String? value = formList[listIndex].options?[index];
-      if (status) {
-        if (!selectedValue.contains(value)) {
-          selectedValue.add(value!);
-          formList[listIndex].cbSelected = selectedValue;
-          update();
-        }
-      } else {
-        if (selectedValue.contains(value)) {
-          selectedValue.removeWhere((element) => element == value);
-          formList[listIndex].cbSelected = selectedValue;
-          update();
-        }
-      }
+      formList[listIndex].cbSelected!.add(value);
+    }
+    update();
+  }
+
+  void changeSelectedFile(File? file, int index) {
+    formList[index].imageFile = file;
+    update();
+  }
+
+  Future<void> pickFile(int index) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      changeSelectedFile(File(image.path), index);
     }
   }
 
-  void pickFile(int index) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: [
-        'jpg',
-        'png',
-        'jpeg',
-        'pdf',
-        'doc',
-        'docx',
-        'csv',
-        'txt',
-        'docx',
-        'xls',
-        'xlsx',
-      ],
-    );
-
-    if (result == null) return;
-
-    formList[index].imageFile = File(result.files.single.path!);
-    String fileName = result.files.single.name;
-    formList[index].selectedValue = fileName;
+  Future<void> submitKycData() async {
+    submitLoading = true;
     update();
-    return;
+
+    final Map<String, dynamic> data = {};
+    final Map<String, File> files = {};
+
+    for (final model in formList) {
+      if (model.type == 'file') {
+        if (model.imageFile != null) {
+          files[model.label!] = model.imageFile!;
+        }
+      } else {
+        data[model.label!] = model.selectedValue;
+      }
+    }
+
+    try {
+      await repo.submitKycData(data, files);
+      isAlreadyPending = true;
+    } catch (e) {
+      // Handle error
+    } finally {
+      submitLoading = false;
+      update();
+    }
   }
+}
+
+class KycFormModel {
+  String? name;
+  String? label;
+  String? type;
+  String? isRequired;
+  List<String>? options;
+  dynamic selectedValue;
+  List<String>? cbSelected;
+  File? imageFile;
+  TextEditingController? textEditingController;
+
+  KycFormModel({
+    this.name,
+    this.label,
+    this.type,
+    this.isRequired,
+    this.options,
+    this.selectedValue,
+    this.cbSelected,
+    this.imageFile,
+    this.textEditingController,
+  });
 }

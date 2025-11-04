@@ -82,7 +82,6 @@ class HeadTailController extends GetxController {
       );
 
       if (gameId != null) {
-        // Mocking the game result
         final bool userWon = Random().nextBool();
         await endTheGame(userWon);
       } else {
@@ -101,7 +100,6 @@ class HeadTailController extends GetxController {
     final double winnings = userWon ? amount : -amount;
     await headTailRepo.endGame(gameId!, userWon, winnings, walletType);
     await loadGameInfo(); // Refresh balance
-    // Show a dialog or snackbar for win/loss
     Get.defaultDialog(
       title: userWon ? "You Won!" : "You Lost!",
       middleText: "Your new balance is $availableBalance",

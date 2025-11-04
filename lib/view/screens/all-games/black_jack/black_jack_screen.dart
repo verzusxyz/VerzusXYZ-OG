@@ -8,6 +8,7 @@ import 'package:verzusxyz/core/utils/my_strings.dart';
 import 'package:verzusxyz/core/utils/style.dart';
 import 'package:verzusxyz/data/controller/all_games/black_jack/black_jack_controller.dart';
 import 'package:verzusxyz/data/repo/all-games/black_jack/black_jack_repo.dart';
+import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_button.dart';
 import 'package:verzusxyz/view/components/buttons/rounded_loading_button.dart';
 import 'package:verzusxyz/view/components/card/game_top_section.dart';
@@ -31,13 +32,10 @@ class BlackJackScreen extends StatefulWidget {
 class _BlackJackScreenState extends State<BlackJackScreen> {
   @override
   void initState() {
+    Get.put(ApiClient(sharedPreferences: Get.find()));
+    Get.put(BlackJackRepo(apiClient: Get.find()));
+    final controller = Get.put(BlackJackController(blackJackRepo: Get.find()));
     super.initState();
-    final walletType = Get.arguments as String;
-    Get.put(BlackJackRepo());
-    final controller = Get.put(BlackJackController(
-      blackJackRepo: Get.find(),
-      walletType: walletType,
-    ));
     controller.loadGameInfo();
   }
 
@@ -80,15 +78,17 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                                       SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
-                                                0.85,
+                                            0.85,
                                         height:
                                             MediaQuery.of(context).size.height *
-                                                0.25,
+                                            0.25,
                                         child: Padding(
                                           padding: EdgeInsets.only(
                                             top:
-                                                MediaQuery.of(context).size.height *
-                                                    0.09,
+                                                MediaQuery.of(
+                                                  context,
+                                                ).size.height *
+                                                0.09,
                                             left: 40,
                                           ),
                                           child: SingleChildScrollView(
@@ -108,15 +108,13 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                                   CustomTextField(
                                     animatedLabel: true,
                                     borderColor: MyColor.textFieldBorder,
-                                    disableBorderColor:
-                                        MyColor.textFieldBorder,
+                                    disableBorderColor: MyColor.textFieldBorder,
                                     needOutlineBorder: true,
                                     borderRadious: Dimensions.space8,
                                     controller: controller.amountController,
                                     labelText: MyStrings.enterAmount.tr,
                                     focusNode: controller.amountFocusNode,
-                                    labelTextColor:
-                                        MyColor.subTitleTextColor,
+                                    labelTextColor: MyColor.subTitleTextColor,
                                     isSuffixContainer: true,
                                     onChanged: (value) {},
                                     currrency: controller.defaultCurrency,
@@ -147,8 +145,7 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                                           hasCornerRadious: true,
                                           isColorChange: true,
                                           textColor: MyColor.colorBlack,
-                                          verticalPadding:
-                                              Dimensions.space15,
+                                          verticalPadding: Dimensions.space15,
                                           cornerRadius: Dimensions.space8,
                                           color: MyColor.primaryButtonColor,
                                           text: MyStrings.playNow,
@@ -160,8 +157,7 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                                               controller
                                                   .submitInvestmentRequest();
                                               AudioPlayer().play(
-                                                AssetSource(
-                                                    MyAudio.clickAudio),
+                                                AssetSource(MyAudio.clickAudio),
                                               );
                                             } else {
                                               CustomSnackBar.error(
@@ -265,17 +261,17 @@ class _BlackJackScreenState extends State<BlackJackScreen> {
                                                       controller.isHitted,
                                                   loaderColor:
                                                       controller.hitStatus !=
-                                                              MyStrings
-                                                                  .errorResponse
-                                                          ? MyColor.redColor
-                                                          : MyColor.redAccent,
+                                                          MyStrings
+                                                              .errorResponse
+                                                      ? MyColor.redColor
+                                                      : MyColor.redAccent,
                                                   text: MyStrings.hit,
                                                   color:
                                                       controller.hitStatus !=
-                                                              MyStrings
-                                                                  .errorResponse
-                                                          ? MyColor.redColor
-                                                          : MyColor.redAccent,
+                                                          MyStrings
+                                                              .errorResponse
+                                                      ? MyColor.redColor
+                                                      : MyColor.redAccent,
                                                 ),
                                               ),
                                             ),
