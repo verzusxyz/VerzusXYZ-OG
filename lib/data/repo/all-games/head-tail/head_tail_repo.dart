@@ -1,53 +1,78 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+/// A repository class for handling Head & Tail game logic with Firebase.
 class HeadTailRepo {
-  ApiClient apiClient;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  HeadTailRepo({required this.apiClient});
-
-  Future<ResponseModel> submitAnswer(String invest, String choose) async {
-    String chooseBet = choose.isEmpty ? "" : choose.toString();
-
-    Map<String, String> map = {
-      'invest': invest.toString(),
-      'choose': chooseBet.toString(),
-    };
-    String url = '${UrlContainer.baseUrl}${UrlContainer.headTailSubmitAnswer}';
-    final res = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
-
-    return res;
+  /// Creates a new Head & Tail game document in Firestore.
+  ///
+  /// - [investAmount]: The amount the user is betting.
+  /// - [walletType]: The wallet to use ('live' or 'demo').
+  /// - [userChoice]: The user's choice ('head' or 'tail').
+  /// - Returns the ID of the new game document.
+  Future<String?> createNewGame({
+    required double investAmount,
+    required String walletType,
+    required String userChoice,
+  }) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final docRef = await _firestore.collection('gameLogs').add({
+          'userId': user.uid,
+          'gameType': 'head_tail',
+          'investAmount': investAmount,
+          'walletType': walletType,
+          'userChoice': userChoice,
+          'status': 'in-progress',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return docRef.id;
+      }
+      return null;
+    } catch (e) {
+      print('Error creating new game: $e');
+      return null;
+    }
   }
 
-  Future<ResponseModel> getAnswer(String gameID) async {
-    Map<String, String> map = {'game_id': gameID.toString()};
-    String url = '${UrlContainer.baseUrl}${UrlContainer.headTailResult}';
-    final responseModel = await apiClient.request(
-      url,
-      Method.postMethod,
-      map,
-      passHeader: true,
-    );
+  /// Ends the game and updates the user's balance.
+  ///
+  /// - [gameId]: The ID of the game log document.
+  /// - [userWon]: Whether the user won the game.
+  /// - [winnings]: The amount the user won or lost.
+  /// - [walletType]: The wallet to update.
+  Future<void> endGame(
+    String gameId,
+    bool userWon,
+    double winnings,
+    String walletType,
+  ) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final userRef = _firestore.collection('users').doc(user.uid);
+        final gameLogRef = _firestore.collection('gameLogs').doc(gameId);
 
-    return responseModel;
-  }
+        await _firestore.runTransaction((transaction) async {
+          final userDoc = await transaction.get(userRef);
+          final balanceField =
+              walletType == 'live' ? 'liveBalance' : 'demoBalance';
+          final currentBalance = userDoc[balanceField] ?? 0;
 
-  Future<dynamic> loadGameInformation() async {
-    String url = '${UrlContainer.baseUrl}${UrlContainer.headTaildata}';
-
-    final response = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return response;
+          transaction
+              .update(userRef, {balanceField: currentBalance + winnings});
+          transaction.update(gameLogRef, {
+            'status': 'completed',
+            'winStatus': userWon ? 'win' : 'lose',
+            'winnings': winnings,
+          });
+        });
+      }
+    } catch (e) {
+      print('Error ending game: $e');
+    }
   }
 }
