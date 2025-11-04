@@ -5,8 +5,7 @@ import 'package:verzusxyz/core/utils/my_images.dart';
 import 'package:verzusxyz/core/utils/util.dart';
 import 'package:verzusxyz/data/controller/localization/localization_controller.dart';
 import 'package:verzusxyz/data/controller/splash/splash_controller.dart';
-import 'package:verzusxyz/data/repo/auth/general_setting_repo.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:verzusxyz/data/repo/splash/splash_repo.dart';
 
 /// A widget that displays the splash screen of the application.
 ///
@@ -26,8 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     MyUtils.splashScreen();
-    Get.put(ApiClient(sharedPreferences: Get.find()));
-    Get.put(GeneralSettingRepo(apiClient: Get.find()));
+    Get.put(SplashRepo());
     Get.put(LocalizationController(sharedPreferences: Get.find()));
     final controller = Get.put(
       SplashController(repo: Get.find(), localizationController: Get.find()),

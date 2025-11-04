@@ -5,7 +5,6 @@ import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_images.dart';
 import 'package:verzusxyz/data/controller/auth/login_controller.dart';
 import 'package:verzusxyz/data/repo/auth/login_repo.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/will_pop_widget.dart';
 
 /// A widget that displays the login screen of the application.
@@ -26,8 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    Get.put(ApiClient(sharedPreferences: Get.find()));
-    Get.put(LoginRepo(apiClient: Get.find()));
+    Get.put(LoginRepo());
     Get.put(LoginController(loginRepo: Get.find()));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,4 +1,6 @@
-class SignUpModel{
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class SignUpModel {
   final String firstName;
   final String lastName;
   final String email;
@@ -11,7 +13,7 @@ class SignUpModel{
     required this.lastName,
     required this.email,
     required this.password,
-     this.refference="",
+    this.refference = "",
     required this.agree,
   });
 
@@ -21,9 +23,9 @@ class SignUpModel{
       'lastname': lastName,
       'email': email,
       'password': password,
-      'password_confirmation':password,
-      'reference':refference,
-      'agree': agree.toString()=='true'?'true':'',
+      'password_confirmation': password,
+      'reference': refference,
+      'agree': agree.toString() == 'true' ? 'true' : '',
     };
   }
 
@@ -36,5 +38,27 @@ class SignUpModel{
       refference: map['reference'] as String,
       agree: map['agree'] as bool,
     );
+  }
+
+  factory SignUpModel.fromFirestore(DocumentSnapshot doc) {
+    Map data = doc.data() as Map<String, dynamic>;
+    return SignUpModel(
+      firstName: data['firstName'] ?? '',
+      lastName: data['lastName'] ?? '',
+      email: data['email'] ?? '',
+      password: '', // Password should not be stored in Firestore
+      refference: data['reference'] ?? '',
+      agree: false, // This is not stored in Firestore
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'reference': refference,
+      'balance': 0, // Initial balance
+    };
   }
 }

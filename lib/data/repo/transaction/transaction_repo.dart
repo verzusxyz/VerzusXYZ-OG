@@ -1,36 +1,29 @@
-import 'package:verzusxyz/core/utils/method.dart';
-import 'package:verzusxyz/core/utils/url_container.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+/// A repository class for handling transactions with Firebase.
 class TransactionRepo {
-  ApiClient apiClient;
-  TransactionRepo({required this.apiClient});
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<ResponseModel> getTransactionList(
-    int page, {
-    String type = "",
-    String remark = "",
-    String searchText = "",
-    String walletType = '',
-  }) async {
-    if (type.toLowerCase() == "all" ||
-        (type.toLowerCase() != 'plus' && type.toLowerCase() != 'minus')) {
-      type = '';
+  /// Retrieves the transactions for the current user.
+  ///
+  /// - Returns a list of [QueryDocumentSnapshot]s representing the transactions.
+  Future<List<QueryDocumentSnapshot>> getTransactions() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final QuerySnapshot querySnapshot = await _firestore
+            .collection('transactions')
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('createdAt', descending: true)
+            .get();
+        return querySnapshot.docs;
+      }
+      return [];
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+      return [];
     }
-
-    if (remark.isEmpty || remark.toLowerCase() == "all") {
-      remark = '';
-    }
-
-    String url =
-        '${UrlContainer.baseUrl}${UrlContainer.transactionEndpoint}?page=$page&type=$type&remark=$remark&search=$searchText';
-    ResponseModel responseModel = await apiClient.request(
-      url,
-      Method.getMethod,
-      null,
-      passHeader: true,
-    );
-    return responseModel;
   }
 }
