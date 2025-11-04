@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:verzusxyz/core/route/route.dart';
 import 'package:verzusxyz/data/model/auth/sign_up_model/sign_up_model.dart';
-import 'package:verzusxyz/data/repo/auth/signup_repo.dart';
+import 'package.verzusxyz/data/repo/auth/signup_repo.dart';
+import 'package:verzusxyz/data/services/settings_service.dart';
 import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
 class RegistrationController extends GetxController {
   final RegistrationRepo registrationRepo;
+  final SettingsService settingsService;
 
-  RegistrationController({required this.registrationRepo});
+  RegistrationController({required this.registrationRepo, required this.settingsService});
 
   bool isLoading = false;
   bool agreeTC = false;
@@ -21,8 +23,11 @@ class RegistrationController extends GetxController {
   final TextEditingController lNameController = TextEditingController();
   final TextEditingController referralCodeController = TextEditingController();
 
+  bool get needAgreePolicy => settingsService.needAgreePolicy;
+  bool get checkPasswordStrength => settingsService.checkPasswordStrength;
+
   Future<void> signUpUser() async {
-    if (!agreeTC) {
+    if (needAgreePolicy && !agreeTC) {
       CustomSnackBar.error(errorList: ['Please agree to the terms and conditions.']);
       return;
     }

@@ -47,4 +47,24 @@ class ProfileRepo {
       return false;
     }
   }
+
+  /// Resets the demo balance for the current user to 1000.
+  ///
+  /// - Returns `true` if the update is successful, otherwise `false`.
+  Future<bool> resetDemoBalance() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .update({'demoBalance': 1000});
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('An unexpected error occurred: $e');
+      return false;
+    }
+  }
 }

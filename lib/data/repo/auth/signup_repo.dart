@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:verzusxyz/data/model/auth/sign_up_model/sign_up_model.dart';
+import 'package.cloud_firestore/cloud_firestore.dart';
+import 'package.firebase_auth/firebase_auth.dart';
+import 'package.verzusxyz/data/model/auth/sign_up_model/sign_up_model.dart';
 
 /// A repository class for handling user registration with Firebase.
 class RegistrationRepo {
@@ -24,7 +24,8 @@ class RegistrationRepo {
         'lastName': model.lastName,
         'email': model.email,
         'reference': model.refference,
-        'balance': 0, // Initial balance
+        'liveBalance': 0,
+        'demoBalance': 1000,
       });
 
       return userCredential;
