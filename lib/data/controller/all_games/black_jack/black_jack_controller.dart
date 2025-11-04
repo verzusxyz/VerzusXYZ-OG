@@ -1,256 +1,187 @@
-import 'dart:async';
-import 'dart:convert';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:verzusxyz/core/utils/my_strings.dart';
-import 'package:verzusxyz/data/controller/all_games/rock_paper_scissors_controller.dart';
-import 'package:verzusxyz/data/model/black_jack_ans/black_jack_ans_model.dart';
-import 'package:verzusxyz/data/model/black_jack_hit/black_jack_hit_model.dart';
-import 'package:verzusxyz/data/model/black_jack_invest/black_jack_invest_model.dart';
-import 'package:verzusxyz/data/model/global/response_model/response_model.dart';
-import 'package:verzusxyz/data/model/head-tail/head_tail_model.dart';
-import 'package:verzusxyz/data/repo/all-games/black_jack/black_jack_repo.dart';
-import 'package:verzusxyz/view/components/alert-dialog/custom_alert_dialog.dart';
-import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
-import 'package:verzusxyz/view/screens/all-games/roulette/widget/lose_dialog.dart';
-import 'package:verzusxyz/view/screens/all-games/widgets/winner_dialogue.dart';
 import 'package:get/get.dart';
+import 'package:verzusxyz/core/utils/my_strings.dart';
+import 'package:verzusxyz/data/repo/all-games/black_jack/black_jack_repo.dart';
+import 'package:verzusxyz/view/components/snack_bar/show_custom_snackbar.dart';
 
 class BlackJackController extends GetxController {
-  BlackJackRepo blackJackRepo;
-  BlackJackController({required this.blackJackRepo});
+  final BlackJackRepo blackJackRepo;
+  final String walletType;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  BlackJackController({required this.blackJackRepo, required this.walletType});
+
   TextEditingController amountController = TextEditingController();
-
   var amountFocusNode = FocusNode();
-
-  Choice? userChoice;
 
   bool isLoading = false;
   bool isSubmitted = false;
   bool playNow = false;
-  bool isBackShow = false;
+  String? gameId;
 
   String name = "";
-  String hitStatus = "";
   String availableBalance = "0.00";
-  String alias = "";
   String instruction = "";
   String shortDescription = "";
-  String defaultCurrency = "";
-  String defaultCurrencySymbol = "";
   String minimum = "0.00";
   String maximum = "0.00";
   String winningPercentage = "0.00";
 
-  Future<void> loadCurrency() async {
-    defaultCurrency = blackJackRepo.apiClient.getCurrencyOrUsername();
+  // Game state
+  List<String> userCards = [];
+  List<String> dealerCards = [];
+  int userScore = 0;
+  int dealerScore = 0;
 
-    defaultCurrencySymbol = blackJackRepo.apiClient.getCurrencyOrUsername(
-      isSymbol: true,
-    );
+  @override
+  void onInit() {
+    super.onInit();
+    loadGameInfo();
   }
 
-  void loadGameInfo() async {
+  Future<void> loadGameInfo() async {
     isLoading = true;
-    myScrenCards.clear();
-    dealearCards.clear();
-
-    delearSum = "";
-    userSum = "";
-    delearAceCount = "";
-    loadCurrency();
     update();
-    ResponseModel model = await blackJackRepo.loadData();
-    if (model.statusCode == 200) {
-      HeadTailModel responseModel = HeadTailModel.fromJson(
-        jsonDecode(model.responseJson),
-      );
-      if (responseModel.status?.toLowerCase() ==
-          MyStrings.success.toLowerCase()) {
-        name = responseModel.data?.game?.name.toString() ?? "";
-        alias = responseModel.data?.game?.alias.toString() ?? "";
-        availableBalance = responseModel.data?.userBalance.toString() ?? "";
-        instruction = responseModel.data?.game?.instruction.toString() ?? "";
-        shortDescription = responseModel.data?.game?.shortDesc.toString() ?? "";
-        minimum = responseModel.data?.game?.minLimit.toString() ?? "";
-        maximum = responseModel.data?.game?.maxLimit.toString() ?? "";
-        if (responseModel.data?.game?.investBack == "1") {
-          double? winningAmount =
-              double.tryParse(responseModel.data?.game?.win.toString() ?? "") ??
-              0.0;
-          winningAmount += 100.0;
-
-          winningPercentage = winningAmount.toString();
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (walletType == 'live') {
+          availableBalance = (userDoc['liveBalance'] ?? 0).toStringAsFixed(2);
         } else {
-          winningPercentage = responseModel.data?.game?.win.toString() ?? "";
+          availableBalance = (userDoc['demoBalance'] ?? 0).toStringAsFixed(2);
         }
       }
-    } else {
-      CustomSnackBar.error(errorList: [model.message]);
+      name = "Blackjack";
+      instruction = "Get as close to 21 as possible without going over.";
+      shortDescription =
+          "Beat the dealer's hand without exceeding 21. Kings, Queens, and Jacks are worth 10. Aces can be 1 or 11.";
+      minimum = "1";
+      maximum = "100";
+      winningPercentage = "100";
+    } catch (e) {
+      CustomSnackBar.error(errorList: ['Failed to load game info.']);
+    } finally {
+      isLoading = false;
+      update();
     }
-    isLoading = false;
-    update();
   }
 
-  String gameId = "";
-
-  List<String> myScrenCards = [];
-  List<String> dealearCards = [];
-
-  String delearSum = '';
-  String delearAceCount = '';
-  String userSum = '';
-
-  bool showResult = false;
-
-  submitInvestmentRequest() async {
-    myScrenCards.clear();
-    dealearCards.clear();
-    hitStatus = "";
-    delearSum = "";
-    userSum = "";
-    delearAceCount = "";
-    isBackShow = false;
+  Future<void> submitInvestmentRequest() async {
     isSubmitted = true;
-    amountFocusNode.unfocus();
     update();
+    try {
+      final double amount = double.parse(amountController.text);
+      if (amount > double.parse(availableBalance)) {
+        CustomSnackBar.error(errorList: [MyStrings.insufficientBalance]);
+        return;
+      }
 
-    ResponseModel model = await blackJackRepo.blackJackInvest(
-      amountController.text,
-    );
-
-    if (model.statusCode == 200) {
-      BlackJackInvestModel blackJackInvestModel = BlackJackInvestModel.fromJson(
-        jsonDecode(model.responseJson),
+      gameId = await blackJackRepo.createNewGame(
+        investAmount: amount,
+        walletType: walletType,
       );
 
-      if (blackJackInvestModel.status?.toLowerCase() ==
-          MyStrings.success.toLowerCase()) {
-        availableBalance = blackJackInvestModel.data?.balance.toString() ?? "";
-        gameId = blackJackInvestModel.data?.gameLog?.id.toString() ?? "";
-        delearSum = blackJackInvestModel.data?.dealerSum.toString() ?? "";
-        delearAceCount =
-            blackJackInvestModel.data?.dealerAceCount.toString() ?? "";
-        userSum = blackJackInvestModel.data?.userSum.toString() ?? "";
-
-        myScrenCards.addAll(blackJackInvestModel.data?.cardImg ?? []);
-
-        dealearCards.addAll(blackJackInvestModel.data?.dealerCardImg ?? []);
-
+      if (gameId != null) {
+        // Mocking initial card deal
+        userCards = ['AC', '10S'];
+        dealerCards = ['7H', 'KD'];
+        _calculateScores();
         playNow = true;
       } else {
-        CustomSnackBar.error(
-          errorList:
-              blackJackInvestModel.message?.error ??
-              [MyStrings.somethingWentWrong.tr],
-        );
+        CustomSnackBar.error(errorList: ['Failed to start the game.']);
       }
-    } else {
-      CustomSnackBar.error(errorList: [model.message]);
+    } catch (e) {
+      CustomSnackBar.error(errorList: ['Invalid amount.']);
+    } finally {
+      isSubmitted = false;
+      update();
     }
-    isSubmitted = false;
-    update();
   }
 
-  bool isHitted = false;
-
-  hit() async {
-    isHitted = true;
-    hitStatus = '';
-    update();
-    ResponseModel model = await blackJackRepo.blackJackhitRepo(gameId);
-
-    if (model.statusCode == 200) {
-      BlackJackHitModel blackJackHitModel = BlackJackHitModel.fromJson(
-        jsonDecode(model.responseJson),
-      );
-      hitStatus = blackJackHitModel.status?.toString() ?? "";
-      if (blackJackHitModel.status?.toLowerCase() ==
-          MyStrings.success.toLowerCase()) {
-        userSum = blackJackHitModel.data?.userSum.toString() ?? "";
-
-        List<String> userNewCard = blackJackHitModel.data?.cardImg ?? [];
-
-        for (String cardImage in userNewCard) {
-          String cleanedCardImage = cardImage.replaceAll(
-            RegExp(r'[^a-zA-Z0-9-]'),
-            '',
-          );
-
-          myScrenCards.add(cleanedCardImage);
-        }
-
-        update();
-        playNow = true;
-      } else {
-        CustomSnackBar.error(
-          errorList:
-              blackJackHitModel.message?.error ??
-              [MyStrings.somethingWentWrong.tr],
-        );
-      }
-    } else {
-      CustomSnackBar.error(errorList: [model.message]);
+  Future<void> hit() async {
+    // Mocking a new card
+    userCards.add('5D');
+    _calculateScores();
+    if (userScore > 21) {
+      // Bust
+      await _endGame(false);
     }
-    isHitted = false;
     update();
   }
 
-  bool isStaying = false;
-
-  stay() async {
-    isStaying = true;
-    update();
-    ResponseModel model = await blackJackRepo.stay(gameId);
-
-    if (model.statusCode == 200) {
-      BlackJackAnswerModel blackJackAnswerModel = BlackJackAnswerModel.fromJson(
-        jsonDecode(model.responseJson),
-      );
-
-      if (blackJackAnswerModel.status?.toLowerCase() ==
-          MyStrings.success.toLowerCase()) {
-        Timer(const Duration(seconds: 3), () {
-          availableBalance = blackJackAnswerModel.data?.balance ?? "";
-          if (blackJackAnswerModel.data?.winStatus == 1) {
-            CustomAlertDialog(
-              child: WinnerDialog(result: userSum.toString()),
-            ).customAlertDialog(Get.context!);
-          } else {
-            CustomAlertDialog(
-              child: LoseDialog(isShowResult: true, result: userSum.toString()),
-            ).customAlertDialog(Get.context!);
-          }
-
-          update();
-          // availableBalance = blackJackAnswerModel.data!..toString();
-        });
-        dealearCards.insert(
-          0,
-          blackJackAnswerModel.data!.hiddenImage.toString(),
-        );
-        isBackShow = true;
-        showResult = true;
-        isSubmitted = false;
-        update();
-      }
-    } else {
-      CustomSnackBar.error(errorList: [model.message]);
+  Future<void> stay() async {
+    // Mocking dealer's turn
+    while (dealerScore < 17) {
+      dealerCards.add('3C');
+      _calculateScores();
     }
-    isStaying = false;
+    bool userWon = (dealerScore > 21 || userScore > dealerScore);
+    await _endGame(userWon);
     update();
   }
 
-  playAgain() {
-    showResult = false;
-    submitInvestmentRequest();
-    update();
-  }
-
-  back() {
+  Future<void> _endGame(bool userWon) async {
+    final double amount = double.parse(amountController.text);
+    final double winnings = userWon ? amount : -amount;
+    await blackJackRepo.endGame(gameId!, userWon, winnings, walletType);
+    await loadGameInfo(); // Refresh balance
     playNow = false;
-    showResult = false;
-    amountController.text = "";
+    // Show a dialog or snackbar for win/loss
+    Get.defaultDialog(
+      title: userWon ? "You Won!" : "You Lost!",
+      middleText: "Your new balance is $availableBalance",
+      actions: [
+        TextButton(
+          onPressed: () {
+            Get.back();
+            resetGame();
+          },
+          child: Text("Play Again"),
+        ),
+      ],
+    );
+  }
+
+  void resetGame() {
+    amountController.clear();
+    userCards.clear();
+    dealerCards.clear();
+    userScore = 0;
+    dealerScore = 0;
+    gameId = null;
     update();
+  }
+
+  void _calculateScores() {
+    userScore = _calculateScore(userCards);
+    dealerScore = _calculateScore(dealerCards);
+  }
+
+  int _calculateScore(List<String> cards) {
+    int score = 0;
+    int aceCount = 0;
+    for (String card in cards) {
+      if (card.startsWith('A')) {
+        aceCount++;
+        score += 11;
+      } else if (card.startsWith('K') ||
+          card.startsWith('Q') ||
+          card.startsWith('J') ||
+          card.startsWith('10')) {
+        score += 10;
+      } else {
+        score += int.parse(card.substring(0, 1));
+      }
+    }
+    while (score > 21 && aceCount > 0) {
+      score -= 10;
+      aceCount--;
+    }
+    return score;
   }
 }

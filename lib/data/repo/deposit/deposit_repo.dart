@@ -1,50 +1,80 @@
-import '../../../core/utils/method.dart';
-import '../../../core/utils/url_container.dart';
-import '../../model/global/response_model/response_model.dart';
-import '../../services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class DepositRepo{
+/// A repository class for handling deposits with Firebase.
+class DepositRepo {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  ApiClient apiClient;
-  DepositRepo({required this.apiClient});
-
-  Future<ResponseModel> getDepositHistory({required int page, String searchText = ""}) async{
-
-    String url = "${UrlContainer.baseUrl}${UrlContainer.depositHistoryUrl}?page=$page&search=$searchText";
-    ResponseModel responseModel = await apiClient.request(url, Method.getMethod, null, passHeader: true);
-    return responseModel;
-
+  /// Retrieves the deposit history for the current user.
+  ///
+  /// - Returns a list of [QueryDocumentSnapshot]s representing the deposit history.
+  Future<List<QueryDocumentSnapshot>> getDepositHistory() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        final QuerySnapshot querySnapshot = await _firestore
+            .collection('deposits')
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('createdAt', descending: true)
+            .get();
+        return querySnapshot.docs;
+      }
+      return [];
+    } catch (e) {
+      print('An unexpected error occurred while fetching deposit history: $e');
+      rethrow;
+    }
   }
 
-  Future<dynamic>getDepositMethods() async {
-
-    String url='${UrlContainer.baseUrl}${UrlContainer.depositMethodUrl}';
-    ResponseModel response= await apiClient.request(url,Method.getMethod, null,passHeader: true);
-    return response;
-
+  /// Retrieves the available deposit methods from Firestore.
+  ///
+  /// - Returns a list of [QueryDocumentSnapshot]s representing the active payment gateways.
+  Future<List<QueryDocumentSnapshot>> getDepositMethods() async {
+    try {
+      final QuerySnapshot querySnapshot = await _firestore
+          .collection('paymentGateways')
+          .where('isActive', isEqualTo: true)
+          .get();
+      return querySnapshot.docs;
+    } catch (e) {
+      print('An unexpected error occurred while fetching deposit methods: $e');
+      rethrow;
+    }
   }
 
+  /// Initiates a new deposit by calling a Firebase Cloud Function.
+  ///
+  /// This method calls the `createCheckoutSession` function, which securely
+  /// communicates with the payment provider and returns a checkout URL.
+  ///
+  /// - [amount]: The amount to deposit.
+  /// - [providerId]: The unique identifier for the selected payment gateway.
+  /// - Returns the checkout URL as a string.
+  Future<String?> createDeposit({
+    required double amount,
+    required String providerId,
+  }) async {
+    try {
+      final HttpsCallable callable =
+          _functions.httpsCallable('createCheckoutSession');
+      final result = await callable.call<Map<String, dynamic>>({
+        'amount': amount,
+        'providerId': providerId,
+      });
 
-  Future<ResponseModel> insertDeposit({required String amount, required String methodCode, required String currency}) async{
-
-    String url = "${UrlContainer.baseUrl}${UrlContainer.depositInsertUrl}";
-    Map<String, String> map = {
-      "amount" : amount,
-      "method_code": methodCode,
-      "currency": currency
-    };
-
-    ResponseModel responseModel = await apiClient.request(url, Method.postMethod, map, passHeader: true);
-    return responseModel;
-
+      if (result.data['url'] != null) {
+        return result.data['url'];
+      }
+      return null;
+    } on FirebaseFunctionsException catch (e) {
+      print('Firebase Functions Exception: ${e.message}');
+      return null;
+    } catch (e) {
+      print('An unexpected error occurred while creating a deposit: $e');
+      return null;
+    }
   }
-
-  Future<dynamic>getUserInfo() async {
-
-    String url='${UrlContainer.baseUrl}${UrlContainer.getProfileEndPoint}';
-    ResponseModel response= await apiClient.request(url,Method.getMethod, null,passHeader: true);
-    return response;
-
-  }
-
 }

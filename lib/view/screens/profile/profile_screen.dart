@@ -5,10 +5,10 @@ import 'package:verzusxyz/core/utils/my_color.dart';
 import 'package:verzusxyz/core/utils/my_strings.dart';
 import 'package:verzusxyz/data/controller/account/profile_controller.dart';
 import 'package:verzusxyz/data/repo/account/profile_repo.dart';
-import 'package:verzusxyz/data/services/api_service.dart';
 import 'package:verzusxyz/view/components/app-bar/custom_appbar.dart';
 import 'package:verzusxyz/view/components/custom_loader/custom_loader.dart';
 import 'package:verzusxyz/view/screens/Profile/widget/profile_top_section.dart';
+import 'package:verzusxyz/view/components/buttons/gradient_rounded_button.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -20,10 +20,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
-    Get.put(ApiClient(sharedPreferences: Get.find()));
-    Get.put(ProfileRepo(apiClient: Get.find()));
-    final controller = Get.put(ProfileController(profileRepo: Get.find()));
     super.initState();
+    Get.put(ProfileRepo());
+    final controller = Get.put(ProfileController(profileRepo: Get.find()));
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       controller.loadProfileInfo();
@@ -57,18 +56,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: MyColor.bottomColor,
                       ),
                     ),
-                    const Align(
+                    Align(
                       alignment: Alignment.topCenter,
                       child: SingleChildScrollView(
-                        padding: EdgeInsets.only(
-                          left: Dimensions.space15,
-                          right: Dimensions.space15,
-                          top: Dimensions.space20,
-                          bottom: Dimensions.space20,
-                        ),
+                        padding: const EdgeInsets.all(Dimensions.space15),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [ProfileTopSection()],
+                          children: [
+                            const ProfileTopSection(),
+                            const SizedBox(height: Dimensions.space20),
+                            GradientRoundedButton(
+                              text: 'Reset Demo Balance',
+                              press: () async {
+                                final repo = Get.find<ProfileRepo>();
+                                await repo.resetDemoBalance();
+                                // You can show a snackbar or some feedback to the user
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ),
